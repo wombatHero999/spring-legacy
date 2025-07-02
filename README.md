@@ -18,16 +18,17 @@
 [로깅설정하기](https://organization-bht.gitbook.io/khmkm/framework/spring/spring-legacy-project/logging)
 
 
-## Chapter 2. Security모듈에 대한 이해 
+## Chapter 2. Security모듈에 대한 이해 -> 뒤로 미룰지 생각할것.
 ##### 1. 인증과 인가에 대한 이해
 ##### 2. Spring Security의 동장방식에 대한 이해
 ##### 3. 비밀번호 암호화(단방향 암호화)
 [spring Security동작 방식](https://organization-bht.gitbook.io/khmkm/framework/spring-boot/spring-security)
 [spring Security모듈의 주요 어노테이션](https://organization-bht.gitbook.io/khmkm/framework/spring/spring-legacy-project/spring-security)
 
-## Chapter 3. Transtional모듈에 대한 이해
+## Chapter 3. 게시판 서비스
 ##### 1. 트랜잭션 모듈에 대한 이해
-##### 2. 게시판 서비스 추가
+##### 2. 페이징 처리
+##### 2. 파일업로드 기능
 [파일업로드 및 다운로드](https://organization-bht.gitbook.io/khmkm/framework/spring/spring-legacy-project/spring-file)
 [Spring transtaional 모듈의 주요 어노테이션](https://organization-bht.gitbook.io/khmkm/framework/spring/spring-legacy-project/spring-transactional)
 
@@ -53,10 +54,4 @@
 ##### 1. 단위테스트
 ##### 2. 어플리케이션테스트
 [spring test모듈의 주요 어노테이션](https://organization-bht.gitbook.io/khmkm/framework/spring/spring-legacy-project/spring-test)
-## Chapter 8. Swagger  
-##### 1. Swagger에 대한 이해
-[Spring Swagger](https://organization-bht.gitbook.io/khmkm/framework/spring/spring-legacy-project/spring-swagger)
-
-
-
 

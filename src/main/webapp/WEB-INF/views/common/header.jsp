@@ -83,6 +83,13 @@ height:80%; position:absolute; margin:auto; top:0px; bottom:0px; right:0px; left
 </style>
 </head>
 <body>
+<c:if test="${not empty alertMsg }">
+	<script>
+		alertify.alert("서비스 요청 성공",'${alertMsg}')
+	</script>
+</c:if>
+
+<c:set var="contextPath" value="${pageContext.request.contextPath}" scope="application" />
 	<div id="header">
 		<div id="header_1">
 			<div id="header_1_left">
@@ -91,8 +98,18 @@ height:80%; position:absolute; margin:auto; top:0px; bottom:0px; right:0px; left
 			<div id="header_1_center">
 			</div>
 			<div id="header_1_right">
-				<a href="${contextPath }/member/insert">회원가입</a>
-				<a href="${contextPath }/member/login">로그인</a>
+				<c:choose>
+					<c:when test="${empty loginUser }">
+						<a href="${contextPath }/member/insert">회원가입</a>
+						<a href="${contextPath }/member/login">로그인</a>					
+					</c:when>
+					<c:otherwise>
+						<label>${loginUser.userName }님 환영합니다 ^^</label>
+						<a href="${contextPath }/member/myPage">마이페이지</a>
+						<a href="${contextPath }/member/logout">로그아웃</a>
+					</c:otherwise>
+				</c:choose>
+				
 			</div>
 		</div>
 		<div id="header_2">

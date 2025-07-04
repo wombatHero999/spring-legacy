@@ -27,7 +27,7 @@ import com.kh.spring.member.model.vo.Member;
 @Controller // Component-scan에 의해 bean객체 등록
 @SessionAttributes({"loginUser"}) // Model에 들어가는 데이터 중 Session에 보관시킬 데이터를 설정하는 주석
 public class MemberController {
-	
+		
 	@Autowired
 	private MemberService mService; //= new MemberServiceImpl();
 	

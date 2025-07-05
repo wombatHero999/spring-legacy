@@ -92,15 +92,33 @@ public class SecurityController {
 	 * 
 	 * @param binder
 	 */
-	@InitBinder
-	public void initBinder(WebDataBinder binder) {
-		//Member.birthday:java.sql.Date 타입 처리
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-		
-		//커스텀에디터 생성 : allowEmpty - true (빈문자열을 null로 변환처리 허용)
-		PropertyEditor editor = new CustomDateEditor(sdf, true);
-		binder.registerCustomEditor(java.sql.Date.class, editor);
-	}
+//	@InitBinder
+//	public void initBinder(WebDataBinder binder) {
+//		//Member.birthday:java.sql.Date 타입 처리
+//		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+//		
+//		//커스텀에디터 생성 : allowEmpty - true (빈문자열을 null로 변환처리 허용)
+//		PropertyEditor editor = new CustomDateEditor(sdf, true);
+//		binder.registerCustomEditor(java.sql.Date.class, editor);
+//	}
+	
+	
+  @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.addValidators(new MemberValidator());
+    }
+
+    @PostMapping("/register")
+    public String register(
+        @ModelAttribute Member member,
+        BindingResult bindingResult
+    ) {
+        if (bindingResult.hasErrors()) {
+            return "member/registerForm";
+        }
+        // 성공 처리
+        return "redirect:/login";
+    }
 	
 	
 }

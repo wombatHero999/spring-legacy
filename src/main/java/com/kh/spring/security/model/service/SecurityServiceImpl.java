@@ -19,8 +19,8 @@ public class SecurityServiceImpl implements SecurityService {
 
 	/* 
      * 사용자 인증 프로세스(UserDetailsService의 loadUserByUsername내용을 재정의.)
-	 * 1) 사용자가 제공한 인증 정보를 검증하여 사용자실제 존재하는 회원인지 확인.
-	 * 존재한다면 사용자의 아이디, 권한을 가지고있는 	 
+	 * 1) 사용자가 제공한 아이디를 바탕으로 인증처리하는 메서드
+	 *     인증 완료시 인증정보가 담긴 UserDetails객체를 반환 	 
 	 */
 	@Override
 	public UserDetails loadUserByUsername(String id) throws UsernameNotFoundException {

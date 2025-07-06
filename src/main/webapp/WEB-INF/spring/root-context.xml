@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+	
+	<!-- Root Context: defines shared resources visible to all other web components -->
+	<!-- 
+		root-context.xml 
+		서버구동과 동시에 web.xml파일을 거쳐서 로딩되는 문서
+		- 서버구동과 동시에 세팅해야하는 내용들을 작성한다.
+	 -->
+	 
+	 <context:property-placeholder location="classpath:datasource.properties"/>
+	 
+	 <!-- DB연결 설정 -->
+	 <!-- 1단계) DB연결을 위한 도구 설정 -->
+	 <bean class="org.apache.commons.dbcp.BasicDataSource" id="dataSource" destroy-method="close">
+	 	<property name="driverClassName" value="${datasource.driverClassName}" />
+	 	<property name="url" value="${datasource.url}" />
+	 	<property name="username" value="${datasource.username}" />
+	 	<property name="password" value="${datasource.password}" />	 	
+	 </bean>
+	 
+	 <!-- 2단계) MyBatis Spring에서 제공하는 sql명령어 실행을 위한 도구 등록 -->
+	 <bean class="org.mybatis.spring.SqlSessionFactoryBean" id="sqlSessionFactory">
+	 	<!-- mybatis 설정파일 위치 지정 -->
+	 	<property name="configLocation" value="classpath:mybatis-config.xml" />
+	 		
+	 	<!-- DB연결을 위한 도구 등록 -->
+	 	<property name="dataSource" ref="dataSource" />
+	 	<!-- 
+	 		매퍼등록
+	 		앞으로 생성할 모든 mapper파일을 한번에 읽어올 예정
+	 	 -->
+	 	<property name="mapperLocations" value="classpath*:mapper/**/*.xml" />
+	 </bean>
+	 
+	 <!-- 3단계) SQL구문을 실행하기 위한 템플릿을 제공하는 도구(Bean) 등록
+	 	  SqlSessionTemplate : SqlSession을 구현한 구현클래스
+	  -->
+	  <bean class="org.mybatis.spring.SqlSessionTemplate" id="sqlSession">
+	  	<constructor-arg ref="sqlSessionFactory" />
+	  </bean>
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+</beans>

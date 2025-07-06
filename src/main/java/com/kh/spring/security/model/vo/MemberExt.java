@@ -12,20 +12,20 @@ import com.kh.spring.member.model.vo.Member;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 
 // UserDetails
 //  - 사용자의 인증 및 권한 정보를 제공하는데 사용하는 인터페이스로 스프링 시큐리티에서 제공
 @Data @NoArgsConstructor	
+@ToString(exclude = "userPwd")
 public class MemberExt extends Member implements UserDetails{
 	
-
+	//AUTHORITY
 	// SimpleGrantedAuthority
 	//  - 문자열 형태의 권한("ROLE_USER", "ROLE_ADMIN")
 	//  - authorities는 문자열 형태의 권한을 배열형태로 저장하는 변수
 	private List<SimpleGrantedAuthority> authorities; // authorities
-	// private String userName; // SpringSecurity에서 사용자 ID를 의미하는 변수로 사용됨.
-	private boolean enabled; // 활성화 여부 1 == true , 0 == false , 활성화 여부가 true여야 로그인이 가능함.
 	/**
 	 * Collection - List/Set
 	 * 
@@ -40,17 +40,23 @@ public class MemberExt extends Member implements UserDetails{
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		return authorities;
 	}
-	//로그인한 사용자의 비밀번호를 반환해주는 메소드
+	
+	// 스프링 시큐리티에서 비밀번호를로 사용하는 값을 반환하는 메소드
+	// ID역할의 필드가 userName이 아니라면 오버라이딩 해줘야한다.
 	@Override 
-	public String getPassword() { // SpringSecurity에서 사용자의 비밀번호를 반환하는 메서드.
+	public String getPassword() { 
 		return getUserPwd();
 	}
-	//로그인한 사용자의 이름을 반환해주는 메소드
+	
+	// 스프링 시큐리티에서 로그인 아이디로 사용하는 값을 반환하는 메소드
+	// ID역할의 필드가 userName이 아니라면 오버라이딩 해줘야한다.
 	@Override
-	public String getUsername() { // SpringSecurity에서 사용자의 ID를 반환하는 메서드.
+	public String getUsername() { 
 		return getUserId();
 	}
 
+	// 실무에서는 계정 만료 상태나 잠금 여부를 DB에 컬럼으로 관리하고, 여기에 맞춰 반환한다.
+	// 즉, 계정 만료상태 확인, 잠금상태 확인 로직이 필요.
 	@Override
 	public boolean isAccountNonExpired() {
 		return true;

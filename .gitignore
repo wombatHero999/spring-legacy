@@ -16,10 +16,8 @@ local.properties
 .classpath
 .project
 /target/
-*.properties
 *.log
 org.eclipse.*
-*.xml
 # External tool builders
 .externalToolBuilders/
 

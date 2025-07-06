@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+	<!-- #4. 암호화인코딩 빈등록 : BCryptPaaswordEncoder -->
+	<beans:bean id="bcryptPasswordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
+
+	<!-- #5. 권한체크 설정 -->
+	<!--
+		http
+		 - 특정 URL에 대한 보안 규칙을 정의하는 태그.
+		 - 특정 URL에 접근할 때 사용자가 필요한 권한이 없으면 오류 페이지로 리다이렉트하거나 로그인 페이지로 
+		   이동시키도록 처리하여 보안을 강화하는 태그.
+		 -	URL 단위로 사용자별 권한을 부여해야 함.
+	-->
+	<!-- 시큐리티 필터 체인에서 정적파일(resources내부파일)은 검사 제외 시키는 옵션 -->
+	<http security="none" pattern="/resources/**"/>
+	<http >
+		<!-- / ,  로그인 요청, 회원가입시에는 권한체크를 하지 않을 예정.( method 속성미작성시 전송방식 구분하지 않음.)-->
+		<intercept-url pattern="/" access="permitAll"/>
+		<intercept-url pattern="/member/login" access="permitAll"/>
+		<intercept-url pattern="/member/insert" access="permitAll"/>
+		<!-- 관리자 권한과 관련된 url은 반드시 ADMIN권한을 가져야지만 접근할수 있도록 한다-->
+<!-- 		<intercept-url pattern="/admin/**" access="hasRole('ADMIN')"/> -->
+		<!-- 기타 모든 url은 USER권한이 이써야 이용가능. 해석순서는 위에서부터 아래로 해석되므로 /**은 맨아래 존재해야함. -->
+		<intercept-url pattern="/**" access="hasRole('USER')"/>
+		
+		<!--
+			form-login : 폼 기반 인증 설정을 지정할수 있는 태그. 
+
+			 - login-page : 로그인폼페이지요청
+			 - login-processing-url : 로그인폼 제출시 해당 폼의 정보를 처리하는 url을 지정.
+			   (UsernamePasswordAuthenticationFilter의 mapping-url)  
+			   로그인 페이지에서 로그인 후, login-processing-url 속성에 지정된 URL로 폼 데이터를 전송하면
+				입력받은 아이디와 비밀번호를 검증하여 인증 처리를 수행함.
+			 인증처리 과정(블로그참조)
+			  - 인증 처리는 AuthenticationManager가 UsernamePasswordAuthenticationToken을 생성하고, 
+			   내부적으로 UserDetailsService의 loadUserByUsername메서드를 호출하여 인증 수행.
+			  - AuthenticationManager역할의 클래스는 직접 구현해줘야한다.
+			 
+			 - username-parameter / password-parameter : 
+				제출폼에서 id/pw에 해당하는 name값이 username/password가 아닌 경우 지정
+				
+			CREATE TABLE persistent_logins (
+			    username VARCHAR(64) NOT NULL,
+			    series VARCHAR(64) PRIMARY KEY,
+			    token VARCHAR(64) NOT NULL,
+			    last_used TIMESTAMP NOT NULL
+			);
+			
+			CREATE TABLE AUTHORITIES (
+			    USER_ID VARCHAR(50) NOT NULL,
+			    AUTHORITY VARCHAR(50) NOT NULL,
+			    CONSTRAINT fk_authorities_users FOREIGN KEY(USER_ID) REFERENCES MEMBER(USER_ID),
+			    CONSTRAINT pk_authorities PRIMARY KEY (USER_ID, AUTHORITY)
+			);
+		-->
+		<form-login 
+			login-page="/member/login"			
+			login-processing-url="/member/loginProcess" 			
+			username-parameter="userId"
+			password-parameter="userPwd"/>
+		
+		<logout
+			logout-url="/member/logout"
+			invalidate-session="true" 
+			logout-success-url="/"/>
+			
+		<!-- 
+			remember-me
+			 - session-timeout시간이 초과되어도 사용자 인증상태를 유지하게 하는 속성
+			 - 사용자의 인증정보(remember-me 토큰)를 브라우저의 쿠키에 저장하여 다시 접속해도 자동으로 로그인이 유지되도록
+			   하는 기능	
+
+			data-source-ref
+			 - 유효한 사용자인지 검사하며, remember-me 토큰 정보를 저장·조회할 테이블에 접근할 DB를 지정.
+			 - db는 root-context.xml에서 설정한 bean객체를 주입
+			 - remember-me토큰은 시큐리티에 의해 자동 추가/삭제 되므로 개발자가 직접 관리할 필요는 없으나, 테이블은
+			   생성해줘야함.
+								
+			token-validity-second 
+			 - remember-me 토큰 유효시간 60 * 60 * 24 * 14 (초단위)
+		-->
+		<remember-me
+			data-source-ref="dataSource" 
+			token-validity-seconds="1209600"/>
+		
+			<!-- 권한 없는 페이지 접근시 처리 -->
+			<access-denied-handler error-page="/security/accessDenied"/>
+		</http>
+	
+	
+	<!-- #6. UserDetails구현체 빈등록 -->
+	<context:component-scan base-package="com.kh.spring.security"/>
+	
+	<!-- #7. 인증/권한 검사 빈객체 설정
+		authentication-manager 
+		 - 인증 처리를 담당하는 핵심 컴포넌트
+	    authentication-provider 
+	     - authentication-manager에 등록되어 실제 인증 로직을 수행하는 객체.
+		 - 실제 인증 로직으로 UserDetailsService를 구현한 securityService 빈을 사용함.
+		 - 인증에 성공하면 인증된 사용자 정보(UserDetails)를 반환함
+	 -->
+	<authentication-manager>
+		<authentication-provider user-service-ref="securityService">			
+			<password-encoder ref="bcryptPasswordEncoder"/>
+		</authentication-provider>
+	</authentication-manager>
+	
+</beans:beans>

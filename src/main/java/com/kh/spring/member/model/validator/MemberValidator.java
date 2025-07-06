@@ -1,8 +1,9 @@
-package com.kh.spring.member.validator;
+package com.kh.spring.member.model.validator;
 
 import org.springframework.validation.Errors;
 import org.springframework.validation.ValidationUtils;
 import org.springframework.validation.Validator;
+
 import com.kh.spring.member.model.vo.Member;
 
 public class MemberValidator implements Validator {

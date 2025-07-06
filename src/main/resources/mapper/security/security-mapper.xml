@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="security">
+  	<select id="loadUserByUsername" resultMap="memberMap">
+		select
+			*
+		from
+			member
+		where
+			user_id = #{userId}
+	</select>
+	<resultMap type="member" id="memberMap">
+		<id column="user_id" property="userId"/>
+		<result column="user_pwd" property="userPwd"/>
+		<result column="userName" property="user_name"/>
+		<result column="gender" property="gender"/>
+		<result column="birthday" property="birthday"/>
+		<result column="email" property="email"/>
+		<result column="phone" property="phone"/>
+		<result column="address" property="address"/>
+		<result column="enroll_date" property="enrollDate"/>
+		<collection property="authorities"
+					javaType="arraylist"
+					ofType="simpleGrantedAuthority"
+					column="user_id"
+					select="selectAuthorities"/>
+	</resultMap>
+	<select id="selectAuthorities" resultMap="authoritiesMap">
+		select 
+			*
+		from 
+			authority
+		where
+			user_id = #{userId}
+	</select>
+	<resultMap type="simpleGrantedAuthority" id="authoritiesMap">
+		<constructor>
+			<arg column="authority" javaType="string"/>
+		</constructor>
+	</resultMap>
+  	
+  	
+</mapper>

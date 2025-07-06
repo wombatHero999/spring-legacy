@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd" >
+<configuration>
+
+	<settings>
+		<setting name="jdbcTypeForNull" value="NULL"/>
+		<!-- 마이바티스 쿼리문, 파라미터값 ,실행결과를 로그를 통해 확인하기 위한 셋팅
+			 (운영환경에서는 반드시 제거해야함)
+		 -->
+		<setting name='logImpl' value="LOG4J"/>		
+		<setting name="mapUnderscoreToCamelCase" value="true"/>
+	</settings>
+	
+	<typeAliases>
+		<!-- Member -> member -->
+		<package name="com.kh.spring"/>
+	</typeAliases>
+
+</configuration>

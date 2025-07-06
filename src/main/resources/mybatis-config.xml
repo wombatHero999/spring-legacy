@@ -13,6 +13,7 @@
 	
 	<typeAliases>
 		<!-- Member -> member -->
+		<typeAlias type="org.springframework.security.core.authority.SimpleGrantedAuthority"/>
 		<package name="com.kh.spring"/>
 	</typeAliases>
 

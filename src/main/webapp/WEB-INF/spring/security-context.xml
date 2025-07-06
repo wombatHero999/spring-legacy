@@ -19,11 +19,12 @@
 	-->
 	<!-- 시큐리티 필터 체인에서 정적파일(resources내부파일)은 검사 제외 시키는 옵션 -->
 	<http security="none" pattern="/resources/**"/>
-	<http >
+	<http auto-config="true" >
 		<!-- / ,  로그인 요청, 회원가입시에는 권한체크를 하지 않을 예정.( method 속성미작성시 전송방식 구분하지 않음.)-->
 		<intercept-url pattern="/" access="permitAll"/>
 		<intercept-url pattern="/member/login" access="permitAll"/>
-		<intercept-url pattern="/member/insert" access="permitAll"/>
+		<intercept-url pattern="/member/idCheck" access="permitAll"/>
+		<intercept-url pattern="/security/insert" access="permitAll"/>
 		<!-- 관리자 권한과 관련된 url은 반드시 ADMIN권한을 가져야지만 접근할수 있도록 한다-->
 <!-- 		<intercept-url pattern="/admin/**" access="hasRole('ADMIN')"/> -->
 		<!-- 기타 모든 url은 USER권한이 이써야 이용가능. 해석순서는 위에서부터 아래로 해석되므로 /**은 맨아래 존재해야함. -->
@@ -45,19 +46,6 @@
 			 - username-parameter / password-parameter : 
 				제출폼에서 id/pw에 해당하는 name값이 username/password가 아닌 경우 지정
 				
-			CREATE TABLE persistent_logins (
-			    username VARCHAR(64) NOT NULL,
-			    series VARCHAR(64) PRIMARY KEY,
-			    token VARCHAR(64) NOT NULL,
-			    last_used TIMESTAMP NOT NULL
-			);
-			
-			CREATE TABLE AUTHORITIES (
-			    USER_ID VARCHAR(50) NOT NULL,
-			    AUTHORITY VARCHAR(50) NOT NULL,
-			    CONSTRAINT fk_authorities_users FOREIGN KEY(USER_ID) REFERENCES MEMBER(USER_ID),
-			    CONSTRAINT pk_authorities PRIMARY KEY (USER_ID, AUTHORITY)
-			);
 		-->
 		<form-login 
 			login-page="/member/login"			
@@ -96,6 +84,7 @@
 	
 	<!-- #6. UserDetails구현체 빈등록 -->
 	<context:component-scan base-package="com.kh.spring.security"/>
+	<context:component-scan base-package="com.kh.spring.member"/>
 	
 	<!-- #7. 인증/권한 검사 빈객체 설정
 		authentication-manager 

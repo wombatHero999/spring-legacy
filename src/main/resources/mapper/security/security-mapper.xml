@@ -9,7 +9,7 @@
 		where
 			user_id = #{userId}
 	</select>
-	<resultMap type="member" id="memberMap">
+	<resultMap type="memberExt" id="memberMap">
 		<id column="user_id" property="userId"/>
 		<result column="user_pwd" property="userPwd"/>
 		<result column="userName" property="user_name"/>
@@ -29,7 +29,7 @@
 		select 
 			*
 		from 
-			authority
+			authorities
 		where
 			user_id = #{userId}
 	</select>
@@ -38,6 +38,6 @@
 			<arg column="authority" javaType="string"/>
 		</constructor>
 	</resultMap>
-  	
+	
   	
 </mapper>

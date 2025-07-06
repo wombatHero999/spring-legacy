@@ -39,11 +39,8 @@ body{ margin : 0; }  /* body 태그가 가지고 있는 기본 margin 제거 */
 .header > div:nth-of-type(1){
     flex-basis : 15%;
 }
-.header > div:nth-of-type(2){
-    flex-basis : 55%;
-}
 .header > div:nth-of-type(3){
-    flex-basis : 30%;
+    flex-basis : 70%;
 }
 
 

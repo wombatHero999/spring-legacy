@@ -1,13 +1,17 @@
 package com.kh.spring.security.controller;
 
+import java.security.Principal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.springframework.beans.propertyeditors.CustomDateEditor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
@@ -18,8 +22,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.kh.spring.member.model.service.MemberService;
 import com.kh.spring.member.model.validator.MemberValidator;
 import com.kh.spring.member.model.vo.Member;
+import com.kh.spring.security.model.vo.MemberExt;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Controller
+@Slf4j
 public class SecurityController {
 	
 	private BCryptPasswordEncoder passwordEncoder;
@@ -74,7 +82,7 @@ public class SecurityController {
 	
 	@PostMapping("/security/insert")
 	public String register(
-			@ModelAttribute Member member ,
+			@Validated @ModelAttribute Member member ,
 			BindingResult bindingResult ,
 			// BindingResult
 			//  - 유효성검사  결과를 저장하는 객체
@@ -82,13 +90,41 @@ public class SecurityController {
 			RedirectAttributes ra
 			) {
 		// 유효성 검사
-		
+		if(bindingResult.hasErrors()) {
+			return "member/memberEnrollForm";
+		}
 		// 유효성검사 통과시 비밀번호정보는 암호화하여, 회원가입 진행
+		String encryptedPassword = passwordEncoder.encode(member.getUserPwd());
+		member.setUserPwd(encryptedPassword);
+		
+		mService.insertMember(member);
 		
 		// 회원가입 완료 후 로그인페이지로 리다이렉트
 		return "redirect:/member/login";
 	}
 	
+	/* 
+	 * 	Authentication
+	 *   - Principal : 인증에 사용된 사용자 객체
+	 *   - Credentials : 인증에 필요한 비밀번호에 대한 정보를 가진 객체(내부적으로 인증작업시 사용)
+	 *   - Authorities : 인증된 사용자가 가진 권한을 저장하는 객체
+	 * */
+	@GetMapping("/security/myPage")
+	public String myPage(Authentication auth2, Principal principal2, Model model) {
+		// 인증된 사용자 정보 가져오기
+		// 1. SecurityContextHodler이용
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		MemberExt principal = (MemberExt) auth.getPrincipal();
+		model.addAttribute("loginUser" , principal);
+		
+		// 2. ArgumentResolver를 이용한 자동 바인딩
+		log.info("auth = {}", auth);
+		log.info("principal = {}", principal);
+		log.info("auth2 = {}", auth2);
+		log.info("principal2 = {}", principal2);
+		
+		return "member/myPage";
+	}
 	
 }
 

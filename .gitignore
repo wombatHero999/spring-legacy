@@ -19,7 +19,7 @@ local.properties
 *.properties
 *.log
 org.eclipse.*
-*.xml
+
 # External tool builders
 .externalToolBuilders/
 

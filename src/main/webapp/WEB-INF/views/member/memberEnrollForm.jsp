@@ -17,6 +17,12 @@
 	
 	#enroll-form table {margin:auto;}
 	#enroll-form input {margin:5px;}
+	
+	.error {
+		color: red;
+		font-size: 0.9em;
+		margin-left: 10px;
+	}
 </style>
 </head>
 <body>

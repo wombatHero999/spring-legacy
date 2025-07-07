@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+	
+	<!-- 암호화 인코딩 기능을 가진 bean객체 등록 -->
+	<beans:bean id="bcryptPasswordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"  />
+	
+	<!-- 
+		http
+		 - 특정 URL에 대한 보안 규칙을 정의하는 태그
+		 - URL에 접근할 때 사용자가 권한이 없으면 오류 페이지로 리다이렉트 하거나 로그인 페이지로
+		   이동시키도록 처리.
+		 - URL단위 사용자별 권한부여가 필요할 때 사용
+	 -->
+	<!-- 정적파일에 대한 보안검사 제외 옵션 -->
+	<http security="none" pattern="/resources/**" />
+	<http auto-config="true">
+		<!-- 메인페이지(/) , 회원가입페이지(/security/insert), 로그인페이지, 아이디중복체크는
+		     모든 사용자가 이용 가능하도록 설정  -->
+		<intercept-url pattern="/" access="permitAll"  />
+		<intercept-url pattern="/security/insert" access="permitAll" />
+		<intercept-url pattern="/member/login" access="permitAll" />
+		<intercept-url pattern="/member/idCheck" access='permitAll' />
+		
+		<!-- 관리자와 관련된 URL은 관리자 권한을 가지고 있어야만 접근가능하도록 제한 -->
+		<intercept-url pattern="/admin/**" access="hasRole('ADMIN')" />
+		<intercept-url pattern="/**" access="hasRole('USER')" />
+		
+		<!-- 
+			form-login
+			 - 폼 기반 로그인 인증 설정을 지정하는 태그
+			 - login-page : 로그임 폼 페이지의 경로
+			 - login-processing-url : 로그인 폼 제출시 해당 폼의 정보를 처리하는 url을 지정
+			   (AuthenticationFilter의 mapping-url)
+			   - 인증처리는 Manger가 usernamepasswordAuthenticationToken을 생성한 후 , 
+			     Provider를 통해 인증작업 수행
+			 - username-parameter / password-parameter
+			    - 제출폼의 id/pw에 해당하는 name값이 username, password가 아닌 경우 지정
+		 -->
+		<form-login
+			login-page="/member/login"
+			login-processing-url="/member/loginProcess"
+			username-parameter="userId"
+			password-parameter="userPwd"
+		/>
+		
+		<!-- servlet의 mappingurl이 아닌 filter의 maapingurl -->
+		<logout
+			logout-url="/member/logout" 
+			invalidate-session="true"
+			logout-success-url="/"
+		/>
+		
+		<!-- 
+			remember-me
+			 - session의 생명시간이 초과되어도 사용자의 인증상태를 유지하게 하는 속성
+			 - 사용자의 인증정보를 브라우저의 쿠키에 저장하여 다시 접속시 자동으로 로그인이 유지되도록 하는 속성
+			 
+			 data-source-ref
+			  - remember-me토큰을 저장할 db
+			  - db는 root-context.xml에서 생성한 bean객체 주입
+			  - remember-me토큰은 시큐리티에 의해 자동 추가/삭제 되므로 개발자가 직접 관리할 필요는 없다.
+			 token-validity-seconds
+			  - 토큰의 유지시간(s). 60*60*24*14
+		 -->
+		<remember-me 
+			data-source-ref="dataSource"
+			token-validity-seconds="1209600"
+		/>
+		
+		
+		
+		<!-- 권한없는 페이지 접근시 처리할 핸들러 -->
+		<access-denied-handler error-page="/security/accessDenied" />
+	</http>
+	
+
+	<!-- Authentication Manger / Provider 등록 -->
+	<context:component-scan base-package="com.kh.spring" />
+	
+	<!-- 
+		authentication-manager
+		 - 인증 처리를 담당하는 핵심 컴포넌트
+		authentication-provider
+		 - authentication-manger에 등록되어 실제 인증로직을 수행하는 객체
+		 - 실제 인증로직으로 UserDetailsService를 구현한 bean객체를 등록.
+		 - provider는 인증 성공시 UserDetails를 반환
+	 -->
+	<authentication-manager>
+		<authentication-provider user-service-ref="securityServiceImpl">
+			<password-encoder ref="bcryptPasswordEncoder" />
+		</authentication-provider>
+	</authentication-manager>
+
+
+
+
+
+
+
+
+</beans:beans>
+
+
+
+
+

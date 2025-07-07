@@ -4,7 +4,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import com.kh.spring.security.model.dao.SecurityDao;
+
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class SecurityServiceImpl implements SecurityService {
 	
 	/*
@@ -15,9 +20,17 @@ public class SecurityServiceImpl implements SecurityService {
 	 * 4. 조회된 사용자 정보를 시큐리티매니저에게 넘겨 비밀번호 및 권한 검증에 사용
 	 *  
 	 *  */
+	private final SecurityDao dao;
+	
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		return null;
+		UserDetails member = dao.loadUserByUsername(username);
+		
+		if(member == null) {
+			throw new UsernameNotFoundException(username);
+		}
+		
+		return member;
 	}
 
 }

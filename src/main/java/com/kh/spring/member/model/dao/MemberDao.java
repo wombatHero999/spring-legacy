@@ -20,4 +20,6 @@ public interface MemberDao {
 
 	HashMap<String, Object> selectOne(String userId);
 
+	void insertAuthority(Member m);
+
 }

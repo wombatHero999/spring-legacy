@@ -18,6 +18,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
@@ -86,7 +87,8 @@ public class SecurityController {
 	
 	
 	@PostMapping("/security/insert") 
-	public String register(@ModelAttribute Member member
+	public String register(
+			@Validated @ModelAttribute Member member
 			// @ModelAttribue 
 			//   - 커맨드객체 바인딩시 사용하며, 추가시 자동으로 model에 커맨드객체를 저장 
 			, BindingResult bindingResult
@@ -103,7 +105,7 @@ public class SecurityController {
 	    String encryptedPassword = passwordEncoder.encode(member.getUserPwd());
 	    member.setUserPwd(encryptedPassword);
 
-	    // DB 저장 로직 필요
+	    // 저장시 하나의 트랜잭션으로 회원+권한을 함께 저장.
 	    mService.insertMember(member);
 
 	    return "redirect:/member/login";

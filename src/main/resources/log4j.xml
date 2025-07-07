@@ -1,41 +1,96 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE log4j:configuration PUBLIC "-//APACHE//DTD LOG4J 1.2//EN" "log4j.dtd">
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
-
+	<!-- 
+		log4j : 
+		프로그램 작동시 로그를 남기기 위한 자바기반 오픈소스 라이브러리
+		로그의 레벨을 지정하여 지정한 레벨 이상의 로그정보만 기록하는 방식으로 작동.
+		로그레벨과 Appender설정을 통해 불필요한 출력을 생략하여 효율적인 로그 관리가 가능.
+	 -->
 	<!-- Appenders -->
 	<appender name="console" class="org.apache.log4j.ConsoleAppender">
+		<!-- 
+			ConsoleAppender : 콘솔창에 로그정보를 출력하는 클래스.
+			FileAppender    : 파일에 로그정보를 출력하는 클래스
+		 -->
+		<!-- 현재 콘솔객체에 대한 기본 출력 레벨 설정 -->
+		<param name="threshold" value="INFO"/>
+		 
 		<param name="Target" value="System.out" />
 		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern" value="%-5p: %c - %m%n" />
+			<!-- <param name="ConversionPattern" value="%-5p: %c - %m%n" /> -->
+<param name="ConversionPattern" value="%-5p:[%d{HH:mm:ss.SSS}] %C{1}.%M(%F:%L) - %m%n" />
+	<!-- 
+		%c %C : 클래스명을 표시함.
+		        %C{1}의 경우
+		        클래스명이 com.kh.spring.LogTest일때 LogTest의미
+		        %C{2}의 경우
+		        클래스명이 com.kh.spring.LogTest일때 spring.LogTest의미
+        %d : 로그시간을 출력 -> java.text.SimpleDateFormat과 동일한 출력패턴을 사용함.
+		%M : 로그를 수행한 메소드명    
+		%m : 로그로 전달된 메세지.
+		%n : 개행문자
+		%F : 파일명을출력.
+		%L : 라인번호를 출력
+	    %p : 로그이벤트명 (INFO , WARN, DEBUG...)
+		- 그외 -
+		%l : 로깅이 발생한 위치정보 - 링크를 제공
+		%t : 로그이벤트가 발생한 쓰레드명
+		%% : %를 출력하기위해 사용
+		%r : 어플리케이션이 시작된 이후 로깅이 발생한 시점까지의 시간(miliseconds)
+	 -->
+		</layout>
+	</appender>
+	
+	<!-- 
+		DailyRollingFileAppender ? 
+			일정기간 단위로 로그파일을 생성하고 기록하도록 도와주는 클래스.
+	 -->
+	<appender name="dailyLog" class="org.apache.log4j.DailyRollingFileAppender">
+		<param name='threshold' value="INFO" />
+		<param name="append" value="true"/>
+		<!-- 파일 이어쓰기여부 지정 true(이어쓰기) / false(새로쓰기) -->
+		<param name="file" value="/logs/kh.log"/>
+		<!-- 파일을 생성할 위치 -->
+		<param name="datePattern" value=".yyyyMMdd"/>
+		<!-- 
+			datePattern속성 미지정시 "매일" 자정에 로그파일 교체.
+			datePattern속성 지정시 : yyyyMM => 매달 로그파일을 교체
+			                      yyyyWW => 매주
+			                      yyyyMMdd a => 자정과, 정오에 로그파일을 바꿔주는 명령어.
+		 -->
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%-5p:[%d{HH:mm:ss.SSS}] %C{1}.%M(%F:%L) - %m%n"/>
 		</layout>
 	</appender>
 	
 	<!-- Application Loggers -->
 	<logger name="com.kh.spring">
-		<level value="info" />
+		<level value="debug" />
 	</logger>
 	
 	<!-- 3rdparty Loggers -->
 	<logger name="org.springframework.core">
-		<level value="info" />
+		<level value="debug" />
 	</logger>
 	
 	<logger name="org.springframework.beans">
-		<level value="info" />
+		<level value="debug" />
 	</logger>
 	
 	<logger name="org.springframework.context">
-		<level value="info" />
+		<level value="debug" />
 	</logger>
 
 	<logger name="org.springframework.web">
-		<level value="info" />
+		<level value="debug" />
 	</logger>
 
 	<!-- Root Logger -->
 	<root>
-		<priority value="warn" />
+		<level value="warn" />
 		<appender-ref ref="console" />
+		<appender-ref ref="dailyLog" />		
 	</root>
 	
 </log4j:configuration>

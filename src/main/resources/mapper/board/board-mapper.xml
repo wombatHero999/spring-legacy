@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="boardMapper">
+	<resultMap type="boardExt" id="boardExtResultMap">
+		<id column="BOARD_NO" property="boardNo"/>
+		<result column="BOARD_TITLE" property="boardTitle"/>
+		<result column="BOARD_CONTENT" property="boardContent"/>
+		<result column="CREATE_DATE" property="createDate" />
+		<result column="BOARD_WRITER" property="boardWriter"/>
+		<result column="COUNT" property="count"/>
+		
+		<result column="ORIGIN_NAME" property="originName"/>
+		<result column="CHANGE_NAME" property="changeName"/>
+		<result column="BOARD_CD" property="boardCd"/>
+		
+		<collection property="imgList" resultMap="boardImgResultMap">
+		</collection>
+	</resultMap>
+	
+	<resultMap id="boardImgResultMap" type="boardImg">
+		<id column="BOARD_IMG_NO" property="boardImgNo" />
+		<result column="IMG_ORIGIN_NAME" property="originName"/>
+		<result column="IMG_CHANGE_NAME" property="changeName"/>
+		<result column="IMG_LEVEL" property="imgLevel"/>
+	</resultMap>
+	
+	<!-- selectMap은 자동 네이밍변환이 작동하지 않음. -->
+	<select id="selectBoardTypeMap" resultType='boardType'>
+		SELECT board_cd as boardCd, board_name FROM BOARD_TYPE
+	</select>
+	
+	<select id="selectBoardTypeList" resultType='boardType'>
+		SELECT *
+		FROM BOARD_TYPE
+		ORDER BY BOARD_CD
+	</select>
+	
+	<select id="selectListCount" parameterType="map" resultType="int">
+		SELECT 
+			COUNT(*)
+		FROM BOARD B 
+		LEFT JOIN MEMBER M ON BOARD_WRITER = USER_NO
+		WHERE B.STATUS = 'Y' AND BOARD_CD = #{boardCode}
+		<if test="keyword != null and keyword != ''">
+			AND
+			<choose>
+				<when test="condition == 'title'">
+					BOARD_TITLE LIKE '%${keyword}%' 
+				</when>
+				<when test="condition.equals('content')">
+					BOARD_CONTENT LIKE '%' || #{keyword} || '%'
+				</when>
+				<when test="condition.equals('writer')">
+					USER_NAME LIKE CONCAT(CONCAT('%', #{keyword}),'%')
+				</when>
+				<when test="condition.equals('titleAndContent')">
+					(BOARD_TITLE LIKE '%${keyword}%' OR
+					 BOARD_CONTENT LIKE '%' || #{keyword} || '%')
+				</when>
+			</choose>
+		</if>
+	</select>
+	
+	<select id= "selectList" parameterType="map" resultType="board">
+		SELECT 
+			BOARD_NO,
+			BOARD_TITLE,
+			USER_NAME AS BOARD_WRITER,
+			COUNT,
+			CREATE_DATE
+		FROM BOARD B 
+		LEFT JOIN MEMBER M ON BOARD_WRITER = USER_NO
+		WHERE B.STATUS = 'Y' AND BOARD_CD = #{boardCode}
+		<if test="keyword != null and keyword != ''">
+			AND
+			<choose>
+				<when test="condition == 'title'">
+					BOARD_TITLE LIKE '%${keyword}%' 
+				</when>
+				<when test="condition.equals('content')">
+					BOARD_CONTENT LIKE '%' || #{keyword} || '%'
+				</when>
+				<when test="condition.equals('writer')">
+					USER_NAME LIKE CONCAT(CONCAT('%', #{keyword}),'%')
+				</when>
+				<when test="condition.equals('titleAndContent')">
+					(BOARD_TITLE LIKE '%${keyword}%' OR
+					 BOARD_CONTENT LIKE '%' || #{keyword} || '%')
+				</when>
+			</choose>
+		</if>
+		ORDER BY BOARD_NO DESC
+	</select>
+	
+	<insert id="insertBoard" parameterType="board" useGeneratedKeys="true">
+	
+		<selectKey keyProperty="boardNo" resultType="int" order="BEFORE">
+			SELECT SEQ_BNO.NEXTVAL FROM DUAL
+		</selectKey>
+		
+		INSERT INTO BOARD
+		(
+			BOARD_NO,
+			BOARD_TITLE,
+			BOARD_CONTENT,
+			ORIGIN_NAME,
+			CHANGE_NAME,
+			BOARD_CD ,
+			BOARD_WRITER
+		) VALUES (
+			#{boardNo} , 
+			#{boardTitle},
+			#{boardContent},
+			#{originName},
+			#{changeName},
+			#{boardCd},
+			#{boardWriter}		
+		)
+	</insert>
+	
+	
+	<insert id="insertBoardImg">
+		INSERT INTO BOARD_IMG
+		(
+			BOARD_IMG_NO,
+			ORIGIN_NAME,
+			CHANGE_NAME,
+			REF_BNO,
+			IMG_LEVEL			
+		) VALUES (
+			SEQ_INO.NEXTVAL,
+			#{originName} ,
+			#{changeName} ,
+			#{refBno} ,
+			#{imgLevel}
+		)
+	</insert>
+	
+	<insert id="insertBoardImgList" parameterType="list">
+		INSERT INTO BOARD_IMG(BOARD_IMG_NO, ORIGIN_NAME, CHANGE_NAME, REF_BNO, IMG_LEVEL) 
+		SELECT SEQ_INO.NEXTVAL , C.*
+		FROM (
+			<!-- 
+				동적 sql문중 foreach
+				- 특정 SQL구문을 반복할때 사용함.
+				- 반복되는 쿼리문 사이에 구분자(separator)를 추가할 수있음
+				
+				collection: 반복할 객체의 타입(자료형)
+				item : collection에서 순차적으로 꺼낸 값을 저장하는 변수
+				separator : 반복 사이의 구분자
+				
+				index : 현재 반복접근중인 인덱스(0,1,2,3,4)
+				open  : 반복 "전에" 출력할 sql
+				close :	반복 "후에" 출력할 sql
+			-->
+			<foreach collection="list" item="boardImg" separator="UNION ALL">
+				SELECT
+					#{boardImg.originName} ,
+					#{boardImg.changeName} ,
+					#{boardImg.refBno} ,
+					#{boardImg.imgLevel}
+				FROM DUAL
+			</foreach>			
+		) C
+	</insert>
+	
+	<select id="selectBoard" parameterType="int" resultMap="boardExtResultMap">
+		SELECT
+			BOARD_NO,
+			BOARD_WRITER,
+			BOARD_TITLE,
+			BOARD_CONTENT,
+			COUNT,
+			CREATE_DATE,
+			B.ORIGIN_NAME,
+			B.CHANGE_NAME,
+			BOARD_CD,
+			
+			BI.ORIGIN_NAME IMG_ORIGIN_NAME,
+			BI.CHANGE_NAME IMG_CHANGE_NAME,
+			BOARD_IMG_NO ,
+			IMG_LEVEL
+		FROM BOARD B
+		LEFT JOIN BOARD_IMG BI ON BOARD_NO = REF_BNO
+		WHERE BOARD_NO = #{boardNo}
+		AND STATUS = 'Y'		
+	</select>
+	
+	<resultMap type="boardExt" id="boardResultSet">
+		<id column="BOARD_NO" property="boardNo"/>
+		<result column="BOARD_TITLE" property="boardTitle"/>
+		<result column="BOARD_CONTENT" property="boardContent"/>
+		<result column="CREATE_DATE" property="createDate" />
+		<result column="BOARD_WRITER" property="boardWriter"/>
+		<result column="COUNT" property="count"/>
+		
+		<result column="USER_NAME" property="userName" />
+		<!-- VO클래스를 매핑할때 필요한 태그(association) -->
+		<!-- <association property="user" resultMap="memberResultSet" /> -->
+		
+		
+		<!-- 
+			collection ofType : 제네릭
+			         javaType : 자바자료형  -> List<BoardImg>
+			         property : 생성된 데이터를 저장할 boardExt의 필드명
+			         select   : 실행시킬 select태그의 아이디값
+			         column   : select에 지정한 아이디값의 쿼리문 호출시 필요한 매개변수
+		 -->
+		<collection property="imgList" ofType="boardImg" javaType="java.util.List"
+			select="selectBoardImgList" column="BOARD_NO"/>		
+	</resultMap>
+	
+	<select id="selectBoardOnly" parameterType="int" resultMap="boardResultSet">
+		SELECT
+			BOARD_NO,
+			BOARD_WRITER,
+			BOARD_TITLE,
+			BOARD_CONTENT,
+			COUNT,
+			CREATE_DATE     ,
+			USER_NAME
+		FROM BOARD
+		LEFT JOIN MEMBER ON BOARD_WRITER = USER_NO
+		WHERE BOARD_NO = #{boardNo}
+		AND BOARD.STATUS = 'Y'		
+	</select>
+	
+	<select id="selectBoardImgList" parameterType="int" resultType="boardImg">
+		SELECT *
+		FROM BOARD_IMG
+		WHERE REF_BNO = #{boardNo}
+		ORDER BY IMG_LEVEL
+	</select>
+	
+	<update id="increaseCount">
+		UPDATE BOARD 
+		   SET COUNT = COUNT +1
+		 WHERE BOARD_NO = #{boardNo}
+	</update>
+	
+	<update id='updateBoard' parameterType="board">
+		UPDATE BOARD 
+		SET BOARD_TITLE = #{boardTitle} ,
+			BOARD_CONTENT = #{boardContent}
+		
+		WHERE BOARD_NO = #{boardNo}
+	</update>	
+	
+	
+	<delete id='deleteBoardImg' parameterType="string">
+		DELETE FROM BOARD_IMG
+		WHERE BOARD_IMG_NO IN (${deleteList})
+	</delete>
+	
+	<update id="updateBoardImg" parameterType="boardImg">
+		UPDATE BOARD_IMG SET
+		ORIGIN_NAME = #{originName} , 
+		CHANGE_NAME = #{changeName}
+		WHERE REF_BNO = #{refBno} AND IMG_LEVEL= #{imgLevel}
+	</update>
+	
+	<select id="selectFileList" resultType="string">
+		SELECT
+			'/resources/images/board/T/' || CHANGE_NAME
+		FROM BOARD_IMG
+		
+		UNION
+		
+		SELECT
+			'/resources/images/board/' || BOARD_CD || '/' || CHANGE_NAME
+		FROM BOARD
+		WHERE CHANGE_NAME IS NOT NULL
+	</select>	
+	
+	
+	
+	
+	
+</mapper>

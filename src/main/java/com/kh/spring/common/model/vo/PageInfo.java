@@ -1,6 +1,8 @@
 package com.kh.spring.common.model.vo;
 
+import lombok.Data;
 
+@Data
 public class PageInfo {
 	private int listCount;
 	private int currentPage;

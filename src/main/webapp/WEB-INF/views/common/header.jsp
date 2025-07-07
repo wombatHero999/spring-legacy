@@ -2,6 +2,8 @@
 	pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form"%>
+<%@ taglib prefix="sec"
+	uri="http://www.springframework.org/security/tags"%>
 <!DOCTYPE html>
 <html>
 <head>
@@ -168,35 +170,52 @@ div {
 			</div>
 			<div id="header_1_center"></div>
 			<div id="header_1_right">
-				<c:choose>
-					<c:when test="${empty principal }">
-						<a href="${contextPath}/security/insert">회원가입</a>
-						<a href="${contextPath}/member/login" >로그인</a>
-					</c:when>
-					<c:otherwise>
-						<span>${loginUser.userName }님
-							환영합니다 ^^</span>
-						<a href="${contextPath}/security/myPage"
-							class="text-decoration-none text-secondary">마이페이지</a>
-						<!-- 로그아웃 버튼 -->
-						<form:form action="${contextPath}/member/logout" method="post" style="display:inline;">
-						    <button type="submit" 
-						            class="border-0 bg-transparent text-secondary p-0 ml-2"
-						            style="cursor:pointer;">
-						        로그아웃
-						    </button>
-						</form:form>
-					</c:otherwise>
-				</c:choose>
+			<%-- 
+			spring secuirty의 taglibs를 활용하여 authentication에 저장된 값들을 꺼내는 방법
+				<sec:authentication property="principal" />
+				<br />
+				<sec:authentication property="credentials" />
+				<br />
+				<sec:authentication property="authorities" /> 
+			--%>
+			
+			<!-- 로그인하지 않은 사용자만 보이는 화면 -->
+			<sec:authorize access="isAnonymous()">
+			<a href="${contextPath}/security/insert">회원가입</a> <a
+				href="${contextPath}/member/login">로그인</a> 
+			</sec:authorize>	
+			
+			<!-- 인증된 사용자만 접근 가능한 화면 -->
+			<sec:authorize access="isAuthenticated()">					
+			<span><sec:authentication
+					property="principal.username" />님 환영합니다 ^^</span> <a
+				href="${contextPath}/security/myPage"
+				class="text-decoration-none text-secondary">마이페이지</a>
+			<!-- 로그아웃 버튼 -->
+			<form:form action="${contextPath}/member/logout" method="post"
+				style="display:inline;">
+				<button type="submit"
+					class="border-0 bg-transparent text-secondary p-0 ml-2"
+					style="cursor: pointer;">로그아웃</button>
+			</form:form>
+			</sec:authorize>
 
 			</div>
 		</div>
 		<div id="header_2">
 			<ul>
-				<li><a href="${contextPath }">HOME</a></li>
-				<li><a href="${contextPath }/chat/chatRoomList">채팅</a></li>
-				<li><a href="${contextPath }/board/list/N">일반게시판</a></li>
-				<li><a href="${contextPath }/board/list/P">사진게시판</a></li>
+				<!-- 권한별 노출 URL설정 -->
+				<sec:authorize access="hasRole('ROLE_USER')">
+					<li><a href="${contextPath }">HOME</a></li>
+					<li><a href="${contextPath }/chat/chatRoomList">채팅</a></li>
+					<c:forEach var="node" items="${boardTypeMap }">
+						<li><a href="${contextPath }/board/list/N">일반게시판</a></li>
+						<li><a href="${contextPath }/board/list/P">사진게시판</a></li>
+					</c:forEach>
+				</sec:authorize>
+				<sec:authorize access="hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')">
+					<li><a href="${contextPath }/admin/list">관리자</a></li>
+				</sec:authorize>
 			</ul>
 		</div>
 	</div>

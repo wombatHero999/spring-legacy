@@ -44,6 +44,42 @@
 	  	<constructor-arg ref="sqlSessionFactory" />
 	  </bean>
 	 
+	 <!-- 
+	 	transactionManager
+	 	 - 데이터베이스 트랜잭션 처리를 담당하는 bean객체
+	 	 - jdbc를 통해 커넥션을 얻어 트랜잭션을 시작/커밋/롤백을 시킴
+	 	 - @Transactional 어노테이션을 통해 트랜잭션을 선언적으로 처리
+	  -->
+	 <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+	 	<!-- 실제 db연결에 사용할 bean객체 주입  -->
+	 	<property name="dataSource" ref="dataSource"/>
+	 </bean> 
+	 
+	 <!-- DB연결 끝 -->
+	 
+	 <!-- 
+	    multipartResolver
+	 	 - Http요청 중 multipart/form-data(파일 업로드)형식의 데이터를 처리하는 bean객체
+	 	 - Spring은 파일을 MultipartFile클래스로 변환해 컨트롤러에서 쉽게 사용할 수 있도록 처리한다.
+	 	 
+	  -->
+	 <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+	 	
+	 	<!--  인코딩 처리 -->
+	 	<property name="defaultEncoding" value="UTF-8"></property>
+	 	<!-- 
+	 		maxUploadSize : 업로드 되는 전체 파일의 크기 제한(바이트단위)	 		
+	 		EX) 업로드크기가 10MB인경우 3+4+2 -> 9MB로 허용. 3+4+4 -> 11MB로 거부 
+	 		
+	 		maxInMemorySize : 업로드 처리 시 디스크에 임시파일을 생성하기 전, 메모리에
+	 		보관할 파일의 최대 크기. 용량 초과시 하드디스크에 임시파일을 생성하여 처리.	 	
+	 		메모리가 여유롭다면 크게, 적다면 작게 설정.	
+	 		EX) 메모리크기가 10KB인 경우, 3KB데이터를 업로드시 메모리에 저장하고,
+	 		    50KB이상인 경우 하드에 저장함.
+	 	 -->
+	 	 <property name="maxUploadSize"   value="10485760"></property>
+	 	 <property name="maxInMemorySize" value="2097152"></property>
+	 </bean>
 	 
 	 
 	 

@@ -29,12 +29,6 @@
 		SELECT board_cd as boardCd, board_name FROM BOARD_TYPE
 	</select>
 	
-	<select id="selectBoardTypeList" resultType='boardType'>
-		SELECT *
-		FROM BOARD_TYPE
-		ORDER BY BOARD_CD
-	</select>
-	
 	<select id="selectListCount" parameterType="map" resultType="int">
 		SELECT 
 			COUNT(*)
@@ -90,6 +84,38 @@
 			</choose>
 		</if>
 		ORDER BY BOARD_NO DESC
+	</select>
+	
+	<select id= "selectListByOffset" parameterType="map" resultType="board">
+		SELECT 
+			BOARD_NO,
+			BOARD_TITLE,
+			USER_NAME AS BOARD_WRITER,
+			COUNT,
+			CREATE_DATE
+		FROM BOARD B 
+		LEFT JOIN MEMBER M ON BOARD_WRITER = USER_NO
+		WHERE B.STATUS = 'Y' AND BOARD_CD = #{boardCode}
+		<if test="keyword != null and keyword != ''">
+			AND
+			<choose>
+				<when test="condition == 'title'">
+					BOARD_TITLE LIKE '%${keyword}%' 
+				</when>
+				<when test="condition.equals('content')">
+					BOARD_CONTENT LIKE '%' || #{keyword} || '%'
+				</when>
+				<when test="condition.equals('writer')">
+					USER_NAME LIKE CONCAT(CONCAT('%', #{keyword}),'%')
+				</when>
+				<when test="condition.equals('titleAndContent')">
+					(BOARD_TITLE LIKE '%${keyword}%' OR
+					 BOARD_CONTENT LIKE '%' || #{keyword} || '%')
+				</when>
+			</choose>
+		</if>
+		ORDER BY BOARD_NO DESC
+		OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
 	</select>
 	
 	<insert id="insertBoard" parameterType="board" useGeneratedKeys="true">
@@ -272,6 +298,11 @@
 		WHERE CHANGE_NAME IS NOT NULL
 	</select>	
 	
+	<select id="selectBoardTypeList" resultType='boardType'>
+		SELECT *
+		FROM BOARD_TYPE
+		ORDER BY BOARD_CD
+	</select>
 	
 	
 	

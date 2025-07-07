@@ -78,6 +78,7 @@ public class BoardController {
         // System.out.println(boardTypeMap); {P=BoardType(boardCd=P, boardName=사진게시판), N=BoardType(boardCd=N, boardName=일반게시판)}
     }
 	
+	// #3. 게시판 목록보기 서비스  
 	// 일반게시판, 사진게시판, 기타등등 게시판 등 하나의 메서드에서 여러 경로를 동시에 매핑하는 방법
 	// 1. GetMapping의 속성값을 문자열 배열형태로 관리
 	// @GetMapping({"/list/N","/list/P"}) // 단, 게시판 유형이 100개라면 100개 하드코딩
@@ -129,17 +130,19 @@ public class BoardController {
 		return "board/boardListView";
 	}	
 	
-	// -- 2일차 끝
-	
-	// -- 3일차 게시판 등록서비스 + 상세서비스시작
+	// #4. 게시판 등록 서비스
+	//  - 포워딩한 jsp를 시큐리티 처리하여 변경
 	@GetMapping("/insert/{boardCode}")
 	public String enrollBoard(@PathVariable("boardCode") String boardCode) {
 		return "board/boardEnrollForm";
 	}
 	
+	// 시큐리티 처리 필요(jsp)
+	// 일반게시판/사진게시판 나눠서 등록기능 작성
+	
 	@PostMapping("/insert/{boardCode}")
 	public String insertBoard(
-			Board b ,
+			@ModelAttribute Board b ,
 			@PathVariable("boardCode") String boardCode ,
 			// sessionAttriubtes에 의해 session으로 이관된 데이터를 매개변수에서 얻어올때 사용하는 방법
 			@AuthenticationPrincipal MemberExt loginUser, 

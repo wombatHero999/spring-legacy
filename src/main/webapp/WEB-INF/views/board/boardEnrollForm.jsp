@@ -1,6 +1,9 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form"%>
+<%@ taglib prefix="sec"
+	uri="http://www.springframework.org/security/tags"%>
 <!DOCTYPE html>
 <html>
 <head>
@@ -21,7 +24,7 @@
 		<div class="innerOuter">
 			<h2>게시글 작성</h2>
 			<br>
-			<form action="${contextPath }/board/insert/${boardCode}" id="enrollForm"
+			<form:form modelAttribut="b" action="${contextPath }/board/insert/${boardCode}" id="enrollForm"
 			 method="post" enctype="multipart/form-data">
 				<table align="center">
 					<tr>
@@ -83,7 +86,7 @@
 					<button type="submit" class="btn btn-primary">등록</button>
 					<button type="reset" class="btn btn-danger">취소</button>
 				</div>		
-			 </form>
+			 </form:form>
 		</div>
 	</div>	
 	

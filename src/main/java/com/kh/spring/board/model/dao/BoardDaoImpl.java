@@ -42,19 +42,57 @@ public class BoardDaoImpl implements BoardDao{
 
 	@Override
 	public List<Board> selectList(PageInfo pi, Map<String, Object> paramMap) {
+		/*
+		 * 특정 페이지의 데이터를 가져오는 방법(페이징 처리)
+		 * 
+		 * 1. ROWNUM, ROW_NUMBER()로 페이징 처리된 쿼리 조회하기(인라인뷰 2중첩 필요)
+           SELECT * ROWNUM기준 특정 ROW조회
+		   FROM (
+			    SELECT ROWNUM AS RNUM, INNER.* 정렬결과에 대한 ROWNUM 조회
+			    FROM (
+			        -- 특정 칼럼을 기준으로 정렬된 쿼리
+			    ) INNER
+			)
+			WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+			- 쿼리문이 복잡하고, 코드의 가독성이 떨어지나 필요한 행만 조회하여 가져올 수 있기 때문에 메모리 낭비나 성능저하가 발생하지 앟는다.
+			- 1페이지 -> WHERE RNUM BETWEEN 1 AND 10
+			- 2페이지 -> WHERE RNUM BETWEEN 11 AND 20 
+			- 3페이지 -> WHERE RNUM BETWEEN 21 AND 30
+		 * 
+		 * 2. RowBounds
+		 *  - MyBatis에서 쿼리 결과에 대해 간단하게 페이징 처리(offset/limit)를 적용하는 도구
+		 *    전체 쿼리결과를 메모리로 가져온 후 잘라내는 방식으로 로드한 데이터가 수만건 이상인경우 메모리낭비와 성능저하가 발생한다. 
+		 *  - "소규모 데이터 쿼리"시 사용하는 것을 권장 
+		 *      - offset : 몇 번째 행부터 가져올지 (시작 위치)
+         		- limit  : 몇 개 행을 가져올지 (가져올 행 수)
+           
+           3. OFFSET FETCH를 사용하여 간단하게 쿼리 조회(ORACLE 12c이상인경우)
+            - 코드의 복잡성을 줄이고 가독성을 크게 확보하는 방식으로 성능적으로 2번과 동일하다.
+            [표현법]
+            SELECT 
+			    ... 조회할 칼럼
+			FROM 테이블
+			  ...
+			ORDER BY 정렬조건 DESC
+			OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+			
+			 - offset번째 행에서부터 limit갯수를 가져온다(fetch)
+			 - 1페이지 -> OFFSET 1 ROWS FETCH NEXT 10 ROWS ONLY
+			 - 2페이지 -> OFFSET 11 ROWS FETCH NEXT 10 ROWS ONLY
+			 - 3페이지 -> OFFSET 21 ROWS FETCH NEXT 10 ROWS ONLY
+		 *  */
 		
 		int offset = (pi.getCurrentPage() -1 ) * pi.getBoardLimit();
 		int limit = pi.getBoardLimit();
+		//RowBounds rowBounds = new RowBounds(offset, limit);		
+		//return sqlSession.selectList("boardMapper.selectList" , paramMap ,rowBounds);
 		
-		RowBounds rowBounds = new RowBounds(offset, limit);
-		
-		return sqlSession.selectList("boardMapper.selectList" , paramMap ,rowBounds);
+		paramMap.put("offset",offset);
+		paramMap.put("limit",limit);
+		return sqlSession.selectList("boardMapper.selectListByOffset" , paramMap);
 	}
 
-	@Override
-	public List<BoardType> selectBoardTypeList() {
-		return sqlSession.selectList("boardMapper.selectBoardTypeList");
-	}
+	
 
 	@Override
 	public int insertBoard(Board b) {
@@ -120,7 +158,10 @@ public class BoardDaoImpl implements BoardDao{
 	
 	
 	
-	
+	@Override
+	public List<BoardType> selectBoardTypeList() {
+		return sqlSession.selectList("boardMapper.selectBoardTypeList");
+	}
 	
 	
 }

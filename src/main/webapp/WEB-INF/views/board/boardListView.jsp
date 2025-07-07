@@ -1,6 +1,9 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="sec"
+	uri="http://www.springframework.org/security/tags"%>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -44,14 +47,15 @@
 	<div class="content">
 		<br><br>
 		<div class="innerOuter" style="padding:5% 10%;">
-			<h2>${boardName}</h2>
+			<!-- boardTypeMap의 데이터 바인딩 -->
+			<h2>${boardTypeMap[boardCode].boardName }</h2>
 		<br><br>
 		
-		<c:if test="${not empty loginUser}">
+		<!-- 로그인한 사용자만 보이게 데이터 바인딩 -->
+		<sec:authorize access="isAuthenticated()">	
 			<a class="btn btn-secondary" style="float:right"
-			   href="${contextPath }/board/insert/${boardCode}"
-			>글쓰기</a>
-		</c:if>
+			   href="${contextPath }/board/insert/${boardCode}">글쓰기</a>
+		</sec:authorize>
 		<br>
 		
 		<table id="boardList" class="table table-hover" align="center">
@@ -97,7 +101,7 @@
         <c:set var="url" value="${boardCode}?currentPage="/>
         
         <c:if test="${not empty param.condition }">
-        	<c:set var="sUrl" value="&condition=${param.condition }&keyword=${param.keyword }"/>
+        	<c:set var="searchParam" value="&condition=${param.condition }&keyword=${param.keyword }"/>
         </c:if>
         
         <div id="pagingArea">
@@ -109,13 +113,13 @@
         		</c:if>
         		<c:if test="${pi.currentPage ne 1 }">
 	       			<li class="page-item">
-	        			<a class="page-link" href="${url}${pi.currentPage -1}${sUrl}">Previous</a>
+	        			<a class="page-link" href="${url}${pi.currentPage -1}${searchParam}">Previous</a>
 	        		</li>        		
         		</c:if>
         		
 				<c:forEach var="i" begin="${pi.startPage }" end="${pi.endPage }">
 	        		<li class="page-item">
-	        			<a class="page-link" href="${url}${i}${sUrl}">${i}</a>
+	        			<a class="page-link" href="${url}${i}${searchParam}">${i}</a>
 	        		</li>	
 				</c:forEach>      
 				  		
@@ -126,7 +130,7 @@
         		</c:if>
         		<c:if test="${pi.currentPage ne pi.maxPage }">
 	       			<li class="page-item">
-	        			<a class="page-link" href="${url}${pi.currentPage +1}${sUrl}">Next</a>
+	        			<a class="page-link" href="${url}${pi.currentPage +1}${searchParam}">Next</a>
 	        		</li>        		
         		</c:if>
         	</ul>

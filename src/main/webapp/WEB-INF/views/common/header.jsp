@@ -209,8 +209,7 @@ div {
 					<li><a href="${contextPath }">HOME</a></li>
 					<li><a href="${contextPath }/chat/chatRoomList">채팅</a></li>
 					<c:forEach var="node" items="${boardTypeMap }">
-						<li><a href="${contextPath }/board/list/N">일반게시판</a></li>
-						<li><a href="${contextPath }/board/list/P">사진게시판</a></li>
+						<li><a href="${contextPath }/board/list/${node.key}">${node.value.boardName }</a></li>
 					</c:forEach>
 				</sec:authorize>
 				<sec:authorize access="hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')">

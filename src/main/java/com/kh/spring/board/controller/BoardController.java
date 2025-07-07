@@ -103,12 +103,13 @@ public class BoardController {
 			) {
 			// 업무로직
 			// 1. 페이징처리
-			//   1) 현재 요청한 게시판 코드와 일치하는 게시글의 총 갯수를 조회
+			//   1) 현재 요청한 게시판 코드 및 검색정보와 일치하는 게시글의 총 갯수를 조회
 			// 	 2) 게시글갯수와, 페이징처리를 위한 기본 파람을 추가하여 PageInfo객체 생성
 			// 2. 현재 요청한 게시판 코드와 일치하며, 현재 페이지에 해당하는 게시글 정보를 조회
 			// 3. 게시글 목록페이지로 게시글정보와, 페이징 정보, 검색정보를 담아 forward
-			
 			// 1) 게시글갯수 카운팅
+			//     - 게시판 코드 + 검색조건을 동시에 보냄 
+			paramMap.put("boardCode", boardCode);
 			int listCount = boardService.selectListCount(paramMap);
 			int pageLimit = 10; // 페이지에 보여줄 게시글 갯수
 			int boardLimit = 5; // 페이지당 최대 페이지바 개수
@@ -116,7 +117,8 @@ public class BoardController {
 			// 2) PageInfo 생성 
 			//     - 페이징 템플릿을 이용
 			PageInfo pi = Pagination.getPageInfo(listCount, currentPage, pageLimit, boardLimit);
-			// 검색결과와 pageInfo객체를 넘겨 게시글 생성
+			// 검색결과+boardCode와 pageInfo객체를 넘겨 게시글 생성
+			
 			List<Board> list = boardService.selectList(pi, paramMap);			
 			// model영역에 데이터 추가
 			
@@ -127,6 +129,9 @@ public class BoardController {
 		return "board/boardListView";
 	}	
 	
+	// -- 2일차 끝
+	
+	// -- 3일차 게시판 등록서비스 + 상세서비스시작
 	@GetMapping("/insert/{boardCode}")
 	public String enrollBoard(@PathVariable("boardCode") String boardCode) {
 		return "board/boardEnrollForm";

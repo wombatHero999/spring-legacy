@@ -45,11 +45,13 @@
 			 
 			 - username-parameter / password-parameter : 
 				제출폼에서 id/pw에 해당하는 name값이 username/password가 아닌 경우 지정
-				
+			
+			톰캣 manger설정변경	
 		-->
+		
 		<form-login 
 			login-page="/member/login"			
-			login-processing-url="/member/loginProcess" 			
+			login-processing-url="/member/loginProcess"
 			username-parameter="userId"
 			password-parameter="userPwd"/>
 		
@@ -57,7 +59,7 @@
 			logout-url="/member/logout"
 			invalidate-session="true" 
 			logout-success-url="/"/>
-			
+		<session-management invalid-session-url="/member/login?sessionExpired=true" />
 		<!-- 
 			remember-me
 			 - session-timeout시간이 초과되어도 사용자 인증상태를 유지하게 하는 속성
@@ -72,10 +74,19 @@
 								
 			token-validity-second 
 			 - remember-me 토큰 유효시간 60 * 60 * 24 * 14 (초단위)
+			 
+			 톰캣의 context.xml의 다음 설정을 추가
+			 <Manager pathname=""/>
+			 톰캣이 session정보를 디스크에 저장하고 다시 불러오는 옵션을 off하는 옵션
+			 이 옵션의 기본값은 톰캣이 재부팅 되어도 같은 세션을 유지하도록 하는 것.
+			 단, 서버가 재부팅되면 어플리케이션에 존재했떤 authication은 삭제됨
+			 단, 인증시에는 jsessionid쿠키가 존재하고 유효하다면 인증처리를 해버림.
 		-->
 		<remember-me
 			data-source-ref="dataSource" 
-			token-validity-seconds="1209600"/>
+			token-validity-seconds="1209600"
+			
+			/>
 		
 			<!-- 권한 없는 페이지 접근시 처리 -->
 			<access-denied-handler error-page="/security/accessDenied"/>

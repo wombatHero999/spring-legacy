@@ -84,6 +84,7 @@ height:80%; position:absolute; margin:auto; top:0px; bottom:0px; right:0px; left
 </head>
 <body>
 	<div id="header">
+	<c:set var="contextPath" value="${pageContext.request.contextPath}" scope="application" />
 		<div id="header_1">
 			<div id="header_1_left">
 				<img src="https://www.iei.or.kr/resources/images/main/main_renewal/top_logo.jpg" />
@@ -91,7 +92,7 @@ height:80%; position:absolute; margin:auto; top:0px; bottom:0px; right:0px; left
 			<div id="header_1_center">
 			</div>
 			<div id="header_1_right">
-				<a href="${contextPath }/member/insert">회원가입</a>
+				<a href="${contextPath }/security/insert">회원가입</a>
 				<a href="${contextPath }/member/login">로그인</a>
 			</div>
 		</div>

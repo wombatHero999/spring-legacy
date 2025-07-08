@@ -16,7 +16,6 @@ local.properties
 .classpath
 .project
 /target/
-*.properties
 *.log
 org.eclipse.*
 

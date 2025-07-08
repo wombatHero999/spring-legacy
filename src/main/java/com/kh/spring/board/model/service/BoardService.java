@@ -31,4 +31,6 @@ public interface BoardService {
 
 	List<BoardType> selectBoardTypeList();
 
+	Map<String, String> getBoardTypeMap();
+
 }

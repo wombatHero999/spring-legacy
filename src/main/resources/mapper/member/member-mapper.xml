@@ -39,7 +39,6 @@
   		    PHONE = #{phone} ,
   		    USER_NAME = #{userName} , 
   		    ADDRESS = #{address} ,
-  		    CHANGE_PWD = 'N',
   		    MODIFY_DATE = SYSDATE
   		WHERE USER_ID = #{userId} AND STATUS = 'Y'
   	</update>
@@ -49,12 +48,4 @@
   		FROM MEMBER
   		WHERE USER_ID = #{userId}
   	</select>
-	
-	<update id="updateMemberChagePwd">
-		UPDATE MEMBER
-		   SET CHANGE_PWD = 'Y'
-		WHERE SYSDATE >  ADD_MONTHS(MODIFY_DATE, 3)
-	</update>  	
-  	
-  	
 </mapper>

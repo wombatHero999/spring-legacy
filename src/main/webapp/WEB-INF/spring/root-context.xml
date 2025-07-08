@@ -44,6 +44,30 @@
 	  	<constructor-arg ref="sqlSessionFactory" />
 	  </bean>
 	 
+	 <!-- 
+	 	transactionManger
+	 	 - 데이터베이스 트랜잭션 처리를 담당하는 bean객체
+	 	 - jdbc를 통해 커넥션을 얻어 온 후, 트랜잭션을 시작/커밋/롤백 처리를 담당
+	 	 - @Transactional어노테이션을 통해 트랜잭션을 선언적으로 처리
+	  -->
+	 <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+	 	<property name="dataSource" ref="dataSource" />	 
+	 </bean>
+	 
+	 <!-- 
+	 	multipartResolver
+	 	 - Http요청 중 파일업로드형태(multipart)의 데이터가 전달되는 경우, 이를 처리해주는 bean객체
+	  -->
+	  <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+	  	<property name="defaultEncoding" value="UTF-8"></property>
+	  	<property name="maxUploadSize" value="10000000"></property>
+	  	<property name="maxInMemorySize" value="2000000"></property>
+	  </bean>
+	  
+	 
+	 
+	 
+	 
 	 
 	 
 	 

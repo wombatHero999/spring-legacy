@@ -3,6 +3,7 @@ package com.kh.spring.board.model.service;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.kh.spring.board.model.dao.BoardDao;
@@ -12,19 +13,28 @@ import com.kh.spring.board.model.vo.BoardImg;
 import com.kh.spring.board.model.vo.BoardType;
 import com.kh.spring.common.model.vo.PageInfo;
 
+import lombok.RequiredArgsConstructor;
 
+@Service
+@RequiredArgsConstructor
 public class BoardServiceImpl implements BoardService {
 
-	private BoardDao boardDao;
+	private final BoardDao boardDao;
+	
+	@Override
+	public Map<String, String> getBoardTypeMap() {
+		return boardDao.getBoardTypeMap();
+	}
+	
 
 	@Override
 	public int selectListCount(Map<String, Object> paramMap) {
-		return 0;
+		return boardDao.selectListCount(paramMap);
 	}
 
 	@Override
 	public List<Board> selectList(PageInfo pi, Map<String, Object> paramMap) {
-		return null;
+		return boardDao.selectList(pi, paramMap);
 	}
 
 	@Override
@@ -69,5 +79,7 @@ public class BoardServiceImpl implements BoardService {
 
 		return null;
 	}
+
+	
 
 }

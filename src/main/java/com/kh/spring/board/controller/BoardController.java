@@ -19,10 +19,11 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,12 +35,10 @@ import com.kh.spring.board.model.service.BoardService;
 import com.kh.spring.board.model.vo.Board;
 import com.kh.spring.board.model.vo.BoardExt;
 import com.kh.spring.board.model.vo.BoardImg;
-import com.kh.spring.board.model.vo.BoardType;
 import com.kh.spring.common.Utils;
 import com.kh.spring.common.model.vo.PageInfo;
 import com.kh.spring.common.template.Pagination;
 import com.kh.spring.member.model.vo.Member;
-import com.kh.spring.security.model.vo.MemberExt;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -131,92 +130,94 @@ public class BoardController {
 	}	
 	
 	// #4. 게시판 등록 서비스
-	//  - 포워딩한 jsp를 시큐리티 처리하여 변경
+	//  - 프론트 폼 추가
+	//  - pom.xml에 의존성 2개 추가 및 root-context.xml에 multipartResolver 설정
+	//  - multipart형식의 데이터 처리를 위한 filter등록. 
 	@GetMapping("/insert/{boardCode}")
-	public String enrollBoard(@PathVariable("boardCode") String boardCode) {
+	public String enrollBoard(
+			@ModelAttribute Board b,
+			@PathVariable("boardCode") String boardCode,
+			Model model
+			) {
+		model.addAttribute("b",b);
 		return "board/boardEnrollForm";
 	}
 	
-	// 시큐리티 처리 필요(jsp)
-	// 일반게시판/사진게시판 나눠서 등록기능 작성
-	
+	// #5. 게시판 등록기능
+	//  - multipart/form-data의 동작방식
+	//  - MultipartFile?
 	@PostMapping("/insert/{boardCode}")
 	public String insertBoard(
 			@ModelAttribute Board b ,
 			@PathVariable("boardCode") String boardCode ,
-			// sessionAttriubtes에 의해 session으로 이관된 데이터를 매개변수에서 얻어올때 사용하는 방법
-			@AuthenticationPrincipal MemberExt loginUser, 
+			Authentication authentication, // board테이블에 추가할 회원번호 얻어오기 위함 
 			Model model,
 			RedirectAttributes ra, 
-			// 첨부파일
-			@RequestParam(value="upfile" , required = false ) MultipartFile upfile , 
-			@RequestParam(value="upfiles" , required = false) List<MultipartFile> upfiles
+			// List<MultipartFile> upfiles
+			//  - MultipartFile 
+			//    - multipart/form-data방식으로 전송된 파일 데이터를 바인딩할 때 필요한 클래스
+			//    - 파일의 이름, 크기 ,존재여부, 저장 기능등 다양한 기능을 제공.
+			//  - List타입은 동일한 name속성값(value="upfile")으로 전달되는 파라미터를 하나의 컬렉션으로 바인딩해준다. 
+			//  - 이때 바인딩할 객체가 없더라도 객체자체는 항상 생성한다.
+			//  - 사진게시판이든, 일반게시판이든 일관된 처리를 위해 배열형태로 선언.
+			@RequestParam(value="upfile" , required = false) List<MultipartFile> upfiles
 			) {
-		//이미지, 파일을 저장할 저장경로 얻어오기
-		String webPath = "/resources/images/board/"+boardCode+"/";
-		String serverFolderPath = application.getRealPath(webPath);
+		// 업무로직
+		// 1. 유효성검사(생략)
+		// 2. 첨부파일이 존재하는지 확인 
+		//   1) 존재한다면 첨부파일을 web서버상에 저장 및 DB로 관리
+		//   2) 존재하지 않는다면 이후 로직 진행
+		// 3. 첨부파일 정보와, 게시글 정보를 바탕으로 게시글 등록 서비스 호출
+		//   1) 게시글 등록을 위한 추가 정보 바인딩
+		// 4. 게시글 등록 결과에 따른 페이지 지정
+		//   1) 성공시 게시글 목록으로 리다이렉트
+		//   2) 실패시 에러페이지로 포워딩 -> ControllerAdvice로 전역 처리
 		
-		//디렉토리가 존재하지 않는다면 생성해주는 코드 추가
-		File dir = new File(serverFolderPath);
-		if(!dir.exists()) {
-			dir.mkdirs();
-		}
-		
-		// 사용자가 첨부파일을 등록한 경우 
-		// upfile은 첨부파일이 있뜬, 없든 무조건 객체는 생성됨.
-		// 단, 첨부파일 등록을 하지 않은경우 내부에 데이터가 비어있다.("")
-		// 사용자가 전달한 파일이 있는지 없는지는 filename이 존재하는지로 확인하면 된다.
-		if(upfile != null && !upfile.getOriginalFilename().equals("")) {
-			String changeName = Utils.saveFile(upfile,serverFolderPath );
-			b.setOriginName(upfile.getOriginalFilename());
-			b.setChangeName(changeName);
-		}
-		
-		//Board 객체에 데이터 추가
-		b.setBoardWriter(loginUser.getUserNo()+"");
-		b.setBoardCd(boardCode);
-		
-		log.info("board {}" , b );
-		
-		// 첨부파일목록(upfiles)같은경우 선택하고 안하고 상관없이 객체는 생성이 된다. 단, 길이가 0일수가 있음
-		// 전달된 파일이 있을경우에만 해당파일을 웹서버에 저장하고, BOARD_IMG테이블에 해당정보를 등록할 예정.
-		List<BoardImg> imgList = new ArrayList();
-		
-		log.info("imgList ?? {} " , upfiles); // 길이 4
+		// 2) 첨부파일 존재여부 체크
+		//  - 첨부파일이 존재한다면 web서버상에 첨부파일을 저장
+		//  - 첨부파일 관리를 위해 DB에 파일 위치정보 저장필요
+		//  - BOARD_IMG객체 생성후 파일의 저장경로, 원본명 저장.
+		List<BoardImg> imgList = new ArrayList<>(); // 배열형태의 BoardImg객체를 저장할 imgList
 		if(upfiles != null ) {
-			for(int i =0; i<upfiles.size(); i++) {
-				if(upfiles.get(i).getOriginalFilename().equals("")) {
+			int level = 0; // 첨부파일의 레벨. 0은 썸네일 혹은 첨부파일을 의미함.
+			// 사진게시판에서 썸네일파일과 아닌 파일을 구분하기 위해 사용.
+			for(MultipartFile upfile : upfiles) {
+				if(upfile.isEmpty()) {
 					continue;
 				}
-				String changeName = Utils.saveFile(upfiles.get(i), serverFolderPath);
+				String changeName = Utils.saveFile(upfile,application, boardCode );
 				BoardImg bi = new BoardImg();
-				bi.setChangeName(changeName);
-				bi.setOriginName(upfiles.get(i).getOriginalFilename());
-				bi.setImgLevel(i);
-				// pk, refBno
+				bi.setOriginName(upfile.getOriginalFilename());
+				bi.setChangeName(changeName);		
+				bi.setImgLevel(level++);
 				imgList.add(bi);
 			}
 		}
+		// 3. 게시글 등록 서비스 호출
+		//  - 서비스 호출 전, 게시글 정보 바인딩 필요
+		//  - 전달받은 데이터 : 게시판 제목, 내용, 첨부파일
+		//  - 테이블에 추가를 위해 필요한 데이터 : 회원번호, 게시판코드
 		
-		int result = 0;
-		try {
-			result = boardService.insertBoard(b , imgList);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		// authentication에서 회원정보 추출하여 board객체에 바인딩
+		Member loginUser = (Member)authentication.getPrincipal();
+		b.setBoardWriter(String.valueOf(loginUser.getUserNo()));
+		b.setBoardCd(boardCode);
+		
+		// 정보 체크
+		log.debug("board {}" , b ); 
+		log.debug("imgList {}", imgList); // ref_bno값은 게시글 등록후 추가 가능
+		
+		int result = boardService.insertBoard(b , imgList);
+		
+		// 4. 게시글 등록 결과에 따른 페이지 지정
+		//   1) 성공시 게시글 목록으로 리다이렉트
+		//   2) 실패시 에러페이지로 포워딩 -> ControllerAdvice로 에러처리 보내기
+		if(result <= 0) {
+			throw new RuntimeException("게시글 작성 실패");
 		}
 		
-		String url = "";
-		if(result > 0) {
-			//RedirectAttributes ra, //매개변수
-			ra.addFlashAttribute("alertMsg", "글작성 성공함.");
-			//session.setAttribute("alertMsg", "글작성 성공함.");			
-			url = "redirect:/board/list/"+boardCode;
-		}else {
-			model.addAttribute("errorMsg","게시글 작성 실패함");
-			url ="common/errorPage";
-		}
-		return url;
+		ra.addFlashAttribute("alertMsg", "게시글작성 성공");
+		return "redirect:/board/list/"+boardCode;
 	}
 	
 	
@@ -229,82 +230,91 @@ public class BoardController {
 			HttpServletResponse res , 
 			HttpSession session
 			) {
-		// 게시글 조회 -> 수정.
-		// 게시판 정보 조회
-		//Board b = boardService.selectBoard(boardNo);
+		// 업무로직
+		// 1. boardNo를 사용하여 게시판정보 조회.
+		// 2. 조회수 증가 서비스 호출 
+		// 3. 게시판정보를 model영역에 담은 후 상세페이지로 forward
+		
+		// 1) 게시판 정보 조회
+		//  - 게시판 상세보기jsp를 바탕으로 필요한 정보 조회
+		//  - 제목, 내용, 작성자, 작성일 , 조회수, 첨부파일n개(첨부파일 번호, 수정전 이름, 수정후 이름, 레벨)
+		//  - 조회결과가 존재하지 않으면 error처리(ControllerAdvice에게 위임)
 		BoardExt b = boardService.selectBoard(boardNo);
 		log.info("{}" , b);
+			
+		if(b == null) {
+			throw new RuntimeException("게시글이 존재하지 않습니다.");
+			// 실무에선 다양한 커스텀 예외를 추가하여 throw된 예외별로 에러페이지를 서비스함.
+		}
+		
+		// 2) 게시글이 존재하는 경우. 조회수 증가 서비스 호출
+		//  - 조회수 증가 조건
+		//    1. 쿠
 		// 상세조회 성공시 쿠키를 활용해서 조회수가 중복으로 증가되지 않도록 방지
-		// + 본인의 글은 애초에 조회수가 증가되지 않게끔 설정
-		if(b != null) {
 			
-			//List<BoardImg> imgList = boardService.selectBoardImgList(boardNo);
-			//model.addAttribute("imgList", imgList);
+		//List<BoardImg> imgList = boardService.selectBoardImgList(boardNo);
+		//model.addAttribute("imgList", imgList);
+		
+		int userNo = 0;
+		
+		Member loginUser = (Member) session.getAttribute("loginUser");
+		
+		if(loginUser != null) {
+			userNo = loginUser.getUserNo();
+		}
+		
+		//게시글 작성자의 boardWriter와 세션에서 얻어온 userNo가 같지 않은 경우에만 조회수 증가
+		if( Integer.parseInt(b.getBoardWriter()) != userNo  ) {
+			//쿠키
+			Cookie cookie = null;
 			
-			int userNo = 0;
+			Cookie[] cArr = req.getCookies(); // 사용자의 쿠키정보들 가져오기
 			
-			Member loginUser = (Member) session.getAttribute("loginUser");
-			
-			if(loginUser != null) {
-				userNo = loginUser.getUserNo();
-			}
-			
-			//게시글 작성자의 boardWriter와 세션에서 얻어온 userNo가 같지 않은 경우에만 조회수 증가
-			if( Integer.parseInt(b.getBoardWriter()) != userNo  ) {
-				//쿠키
-				Cookie cookie = null;
-				
-				Cookie[] cArr = req.getCookies(); // 사용자의 쿠키정보들 가져오기
-				
-				if(cArr != null && cArr.length > 0) {
-					for(Cookie c : cArr) {
-						//사용자의 쿠키 목록중, 쿠키의 이름이 "readBoardNo"라는걸 찾을예정
-						if("readBoardNo".equals(c.getName())) {
-							cookie = c;
-							break;
-						}
+			if(cArr != null && cArr.length > 0) {
+				for(Cookie c : cArr) {
+					//사용자의 쿠키 목록중, 쿠키의 이름이 "readBoardNo"라는걸 찾을예정
+					if("readBoardNo".equals(c.getName())) {
+						cookie = c;
+						break;
 					}
 				}
+			}
+			
+			int result = 0;
+			
+			// readBoardNo라는 이름의 쿠키가 생성된적이 없을때
+			if(cookie == null) {
+				// readBoardNo쿠키 생성
+				cookie = new Cookie("readBoardNo",boardNo+"");
+				// 조회수 증가 서비스 호출
+				result = boardService.increaseCount(boardNo);
+			}else {
+				// readBoardNo라는 이름의 쿠기가 존재하는 케이스
+				// 기존 쿠키값중에 중복되는 게시글번호가 없는경우, 조회수증가와 함께
+				// 쿠키에 저장된 값중 현재 조회된 게시글번호를 추가
 				
-				int result = 0;
+				String[] arr = cookie.getValue().split("/"); // 1/2/5/11 ... => [1,2,5,11]
+				// 배열을 컬렉션(List)으로 변환 -> indexOf를 사용할 예정
+				// List.indexOf(obj) : 컬렉션안에서 매개변수로 들어온 obj와 일치하는 부분의 인덱스를 반환해줌
+				// 일치하는 값이 없다면? -1 반환
+				List<String> list = Arrays.asList(arr);
 				
-				// readBoardNo라는 이름의 쿠키가 생성된적이 없을때
-				if(cookie == null) {
-					// readBoardNo쿠키 생성
-					cookie = new Cookie("readBoardNo",boardNo+"");
-					// 조회수 증가 서비스 호출
+				// 기존의 쿠키값들중 현재 게시글번호와 일치하는값이 없는 경우 =>첨보는 게시글인 경우
+				if(list.indexOf(boardNo+"") == -1) {
+					// 조회수 증가
 					result = boardService.increaseCount(boardNo);
-				}else {
-					// readBoardNo라는 이름의 쿠기가 존재하는 케이스
-					// 기존 쿠키값중에 중복되는 게시글번호가 없는경우, 조회수증가와 함께
-					// 쿠키에 저장된 값중 현재 조회된 게시글번호를 추가
-					
-					String[] arr = cookie.getValue().split("/"); // 1/2/5/11 ... => [1,2,5,11]
-					// 배열을 컬렉션(List)으로 변환 -> indexOf를 사용할 예정
-					// List.indexOf(obj) : 컬렉션안에서 매개변수로 들어온 obj와 일치하는 부분의 인덱스를 반환해줌
-					// 일치하는 값이 없다면? -1 반환
-					List<String> list = Arrays.asList(arr);
-					
-					// 기존의 쿠키값들중 현재 게시글번호와 일치하는값이 없는 경우 =>첨보는 게시글인 경우
-					if(list.indexOf(boardNo+"") == -1) {
-						// 조회수 증가
-						result = boardService.increaseCount(boardNo);
-						// 쿠기값에 현재 게시글번호 추가
-						cookie.setValue(cookie.getValue()+"/"+boardNo);
-					}
-				}
-				
-				if(result > 0) {// 성공적으로 조회수 증가시
-					b.setCount(b.getCount() + 1); 
-					
-					cookie.setPath(req.getContextPath());
-					cookie.setMaxAge(1 * 60 * 60); // 1시간만 유지 
-					res.addCookie(cookie);
+					// 쿠기값에 현재 게시글번호 추가
+					cookie.setValue(cookie.getValue()+"/"+boardNo);
 				}
 			}
-		}else { // 조회된 board가 null인 경우
-			model.addAttribute("errorMsg" , "게시글 조회 실패 ....");
-			return "common/errorPage";
+			
+			if(result > 0) {// 성공적으로 조회수 증가시
+				b.setCount(b.getCount() + 1); 
+				
+				cookie.setPath(req.getContextPath());
+				cookie.setMaxAge(1 * 60 * 60); // 1시간만 유지 
+				res.addCookie(cookie);
+			}
 		}
 		
 		model.addAttribute("board",b);

@@ -17,7 +17,7 @@ public interface BoardService {
 
 	List<Board> selectList(PageInfo pi, Map<String, Object> paramMap);
 
-	int insertBoard(Board b , List<BoardImg> imgList) throws Exception;
+	int insertBoard(Board b , List<BoardImg> imgList) ;
 
 	BoardExt selectBoard(int boardNo);
 

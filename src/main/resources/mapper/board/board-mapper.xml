@@ -118,8 +118,15 @@
 		OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
 	</select>
 	
-	<insert id="insertBoard" parameterType="board" useGeneratedKeys="true">
-	
+	<insert id="insertBoard" parameterType="board">
+		<!--
+			selectKey 
+			- INSERT 전(BEFORE)/후(AFTER)에 실행되어 게시글 번호와 같은 자동증가값을 가져오는 구문
+			- keyProperty: 결과를 저장할 필드명 (boardNo)
+			- resultType: 반환될 타입 (정수)
+			- order="BEFORE": INSERT 전(BEFORE)에 실행되도록 설정. AFTER설정시 이후도가능.
+			- 같은 트랜잭션의 BOARD_IMG테이블에 추가할 BOARD_NO값을 얻어오기 위해 사용한다.
+		 -->
 		<selectKey keyProperty="boardNo" resultType="int" order="BEFORE">
 			SELECT SEQ_BNO.NEXTVAL FROM DUAL
 		</selectKey>
@@ -129,55 +136,32 @@
 			BOARD_NO,
 			BOARD_TITLE,
 			BOARD_CONTENT,
-			ORIGIN_NAME,
-			CHANGE_NAME,
 			BOARD_CD ,
 			BOARD_WRITER
 		) VALUES (
 			#{boardNo} , 
 			#{boardTitle},
 			#{boardContent},
-			#{originName},
-			#{changeName},
 			#{boardCd},
 			#{boardWriter}		
 		)
 	</insert>
 	
-	
-	<insert id="insertBoardImg">
-		INSERT INTO BOARD_IMG
-		(
-			BOARD_IMG_NO,
-			ORIGIN_NAME,
-			CHANGE_NAME,
-			REF_BNO,
-			IMG_LEVEL			
-		) VALUES (
-			SEQ_INO.NEXTVAL,
-			#{originName} ,
-			#{changeName} ,
-			#{refBno} ,
-			#{imgLevel}
-		)
-	</insert>
-	
+	<!-- 
+		첨부파일(이미지 등) 여러 개를 한 번에 등록하는 insert문 
+		- BOARD_IMG 테이블에 다중 insert
+		- MyBatis의 foreach 태그를 활용하여 전달받은 배열의 길이만큼 
+		  SELECT DUAL문을 UNION ALL로 이어줄 예정
+		- MyBatis에서 배열의 길이만큼 insert를 수행하는 것보다 성능상 뛰어남.
+	-->
 	<insert id="insertBoardImgList" parameterType="list">
 		INSERT INTO BOARD_IMG(BOARD_IMG_NO, ORIGIN_NAME, CHANGE_NAME, REF_BNO, IMG_LEVEL) 
-		SELECT SEQ_INO.NEXTVAL , C.*
+		SELECT SEQ_IMG_NO.NEXTVAL , C.*
 		FROM (
 			<!-- 
-				동적 sql문중 foreach
-				- 특정 SQL구문을 반복할때 사용함.
-				- 반복되는 쿼리문 사이에 구분자(separator)를 추가할 수있음
-				
-				collection: 반복할 객체의 타입(자료형)
-				item : collection에서 순차적으로 꺼낸 값을 저장하는 변수
+				collection: 전달받은 List<BoardImg>
+				item : 반복 변수
 				separator : 반복 사이의 구분자
-				
-				index : 현재 반복접근중인 인덱스(0,1,2,3,4)
-				open  : 반복 "전에" 출력할 sql
-				close :	반복 "후에" 출력할 sql
 			-->
 			<foreach collection="list" item="boardImg" separator="UNION ALL">
 				SELECT
@@ -304,7 +288,22 @@
 		ORDER BY BOARD_CD
 	</select>
 	
-	
+	<insert id="insertBoardImg">
+		INSERT INTO BOARD_IMG
+		(
+			BOARD_IMG_NO,
+			ORIGIN_NAME,
+			CHANGE_NAME,
+			REF_BNO,
+			IMG_LEVEL			
+		) VALUES (
+			SEQ_INO.NEXTVAL,
+			#{originName} ,
+			#{changeName} ,
+			#{refBno} ,
+			#{imgLevel}
+		)
+	</insert>	
 	
 	
 </mapper>

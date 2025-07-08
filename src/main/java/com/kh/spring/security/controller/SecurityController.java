@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.kh.spring.member.model.service.MemberService;
@@ -49,7 +50,7 @@ public class SecurityController {
 	//  - /member/loginProcess로 요청이 들어오는 경우 Filter를 통해 인증을 처리
 	
 	// 에러페이지 처리용 url
-	@GetMapping("/security/accessDenied")
+	@RequestMapping("/security/accessDenied")
 	public String accessDenied(Model model) {
 		model.addAttribute("errorMsg","접근불가능한 페이지입니다.");
 		return "common/errorPage";

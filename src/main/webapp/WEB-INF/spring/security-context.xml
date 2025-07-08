@@ -29,7 +29,6 @@
 <!-- 		<intercept-url pattern="/admin/**" access="hasRole('ADMIN')"/> -->
 		<!-- 기타 모든 url은 USER권한이 이써야 이용가능. 해석순서는 위에서부터 아래로 해석되므로 /**은 맨아래 존재해야함. -->
 		<intercept-url pattern="/**" access="hasRole('USER')"/>
-		
 		<!--
 			form-login : 폼 기반 인증 설정을 지정할수 있는 태그. 
 
@@ -59,7 +58,6 @@
 			logout-url="/member/logout"
 			invalidate-session="true" 
 			logout-success-url="/"/>
-		<session-management invalid-session-url="/member/login?sessionExpired=true" />
 		<!-- 
 			remember-me
 			 - session-timeout시간이 초과되어도 사용자 인증상태를 유지하게 하는 속성

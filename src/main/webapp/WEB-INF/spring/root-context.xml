@@ -49,6 +49,7 @@
 	 	 - 데이터베이스 트랜잭션 처리를 담당하는 bean객체
 	 	 - jdbc를 통해 커넥션을 얻어 트랜잭션을 시작/커밋/롤백을 시킴
 	 	 - @Transactional 어노테이션을 통해 트랜잭션을 선언적으로 처리
+	 	 - servlet-context.xml에서 어노테이션 활성화 필요
 	  -->
 	 <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
 	 	<!-- 실제 db연결에 사용할 bean객체 주입  -->
@@ -60,8 +61,6 @@
 	 <!-- 
 	    multipartResolver
 	 	 - Http요청 중 multipart/form-data(파일 업로드)형식의 데이터를 처리하는 bean객체
-	 	 - Spring은 파일을 MultipartFile클래스로 변환해 컨트롤러에서 쉽게 사용할 수 있도록 처리한다.
-	 	 
 	  -->
 	 <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
 	 	

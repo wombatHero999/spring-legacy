@@ -41,41 +41,61 @@ public class BoardServiceImpl implements BoardService{
 		return boardDao.selectList(pi , paramMap);
 	}
 	
-	@Transactional(rollbackFor = {Exception.class}) // 예외(Exception)가 발생하면 무조건 rollback처리 해주는 속성
+	// @Transactional
+	//  - 선언적 트랜잭션 관리 어노테이션
+	//  - 예외(Exception)가 발생하면 무조건 rollback처리 해주는 속성(기본은 RuntimeException)
+	@Transactional(rollbackFor = {Exception.class}) 
 	@Override
-	public int insertBoard(Board b , List<BoardImg> imgList) throws Exception {
+	public int insertBoard(Board b , List<BoardImg> imgList)  {
+		/*
+		 * 서비스 로직 개요
+		 * 0. 게시글 데이터 전처리(개행처리 및 XSS공격 핸들링)
+		 * 1. 게시글 테이블 등록(항상실행)
+		 * 2. 첨부파일/이미지 등록
+		 * 3. 이미지 및 테이블 등록 실패시 롤백처리
+		 *  */
+		
 		/* 
-		 * 1) 게시글 삽입
-		 * 게시글 삽입시 게시글의 제목, 내용에 들어가는 문자열에 크로스사이트스크립트 공격을 방지하기위한 메소드 추가.
-		 * 텍스트 에리어에 들어가는 엔터 및 스페이스바를 개행문자로 변환처리
+		 * 0) 데이터 전처리
+		 *   - 게시글 내용에 대한 XSS 공격 방지 및 개행 문자 처리
+		 *   - 사용자가 입력한 <script> 같은 태그를 무력화하여 보안 강화(게시글 제목, 내용)
+		 *   - textarea의 개행(\r\n)을 <br>로 치환하여 출력 시 줄바꿈 유지(게시글 내용)
 		 * */
 		b.setBoardContent(Utils.XSSHandling(b.getBoardContent()));
 		b.setBoardContent(Utils.newLineHandling(b.getBoardContent()));
 		b.setBoardTitle(Utils.XSSHandling(b.getBoardTitle()));
 		
+		// 1) 게시글 저장
+		//  - 게시글테이블에 데이터 insert.
+		//  - mybatis의 selectKey를 통해 boardNo값을 b객체에 바인딩
+		
 		int result = boardDao.insertBoard(b);
-		// 2) 첨부파일 이미지리스트 등록(BOARD_IMG)
-		int boardNo = b.getBoardNo();
-//		버전1)
-//		if(  !   imgList.isEmpty()) {
-//			for( BoardImg bi    :  imgList) {
-//				bi.setRefBno(boardNo);
-//				result *= boardDao.insertBoardImg(bi);
-//			}
-//		}
-//		버전2)
-		if(!imgList.isEmpty()) {
-			for(BoardImg bi : imgList) {
-				bi.setRefBno(boardNo);
-				
-			}
-			result = boardDao.insertBoardImgList(imgList); //다중 insert문
-			
-			if(result != imgList.size()) { //이미지 삽입 실패시
-				throw new Exception("예외 강제 발생");
-			}
+		
+		// 3) 테이블 등록 실패시 롤백처리
+		if(result == 0) {
+			throw new RuntimeException("게시글 등록 실패");
 		}
 		
+		// 2) 첨부파일 이미지리스트 등록(BOARD_IMG)
+		//  - 전달받은 imgList가 존재하는 경우 등록 진행
+		//  - 등록 성공한 게시판의 번호를 refBno에 추가로 저장.
+		//  - imgList를 dao로 전달하여 insert문 실행
+		//    (mybatis의 foreach태그를 활용하여 다중 insert문 구현)
+		//    (배열의 갯수만큼 insert메서드를 호출하는 것보다 성능상 좋음.)
+		if(!imgList.isEmpty()) {
+			// refBno초기화
+			for(BoardImg bi : imgList) {
+				bi.setRefBno(b.getBoardNo());
+			}
+			// 다중 insert문 수행
+			int imgResult = boardDao.insertBoardImgList(imgList);
+			
+			// 3. 이미지 등록 실패시 에러발생시켜 "롤백"처리
+			//  - 추가된 행의 개수와 배열의 크기가 일치하지 않는 경우 실패
+			if(imgResult != imgList.size()) {
+				throw new RuntimeException("예외 강제 발생");
+			}
+		}
 		return result;
 	}
 
@@ -118,7 +138,7 @@ public class BoardServiceImpl implements BoardService{
 				for(int i =0; i<upfiles.size(); i++) {
 					if(!upfiles.get(i).isEmpty()) {
 						
-						String changeName = Utils.saveFile(upfiles.get(i), serverFolderPath);
+						String changeName = "";//Utils.saveFile(upfiles.get(i), serverFolderPath);
 						
 						// BoardImg객체 생성후, 필요한값들 추가해서 imgList에 추가.
 						BoardImg bi = new BoardImg();

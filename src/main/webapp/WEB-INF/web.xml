@@ -3,64 +3,100 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee https://java.sun.com/xml/ns/javaee/web-app_4_0.xsd">
 
-	<!-- The definition of the Root Spring Container shared by all Servlets and Filters -->
+	<!-- The definition of the Root Spring Container shared by all Servlets 
+		and Filters -->
 	<!-- #3. 공용 applicationContext관련 설정파일에 security-context.xml 추가 -->
-	<!--  /WEB-INF/spring/*-context.xml 와 같이 wildcard 사용가능 -->
-	<!-- The definition of the Root Spring Container shared by all Servlets and Filters -->
+	<!-- /WEB-INF/spring/*-context.xml 와 같이 wildcard 사용가능 -->
+	<!-- The definition of the Root Spring Container shared by all Servlets 
+		and Filters -->
 	<context-param>
 		<param-name>contextConfigLocation</param-name>
 		<param-value>
 			/WEB-INF/spring/*-context.xml
 		</param-value>
 	</context-param>
-	
+
 	<!-- Creates the Spring Container shared by all Servlets and Filters -->
 	<listener>
-		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+		<listener-class>org.springframework.web.context.ContextLoaderListener
+		</listener-class>
 	</listener>
 
 	<!-- Processes application requests -->
 	<servlet>
 		<servlet-name>appServlet</servlet-name>
-		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet
+		</servlet-class>
 		<init-param>
 			<param-name>contextConfigLocation</param-name>
-			<param-value>/WEB-INF/spring/appServlet/servlet-context.xml</param-value>
+			<param-value>/WEB-INF/spring/appServlet/servlet-context.xml
+			</param-value>
 		</init-param>
 		<load-on-startup>1</load-on-startup>
 	</servlet>
-		
+
 	<servlet-mapping>
 		<servlet-name>appServlet</servlet-name>
 		<url-pattern>/</url-pattern>
 	</servlet-mapping>
-	
+
 	<!-- post방식 인코딩 설정 UTF-8 필터 -->
 	<filter>
 		<filter-name>encodingFilter</filter-name>
-		<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+		<filter-class>org.springframework.web.filter.CharacterEncodingFilter
+		</filter-class>
 		<init-param>
 			<param-name>encoding</param-name>
 			<param-value>utf-8</param-value>
 		</init-param>
-		<init-param> 
-	       <param-name>forceEncoding</param-name> 
-	       <param-value>true</param-value> 
-    	</init-param> 
+		<init-param>
+			<param-name>forceEncoding</param-name>
+			<param-value>true</param-value>
+		</init-param>
 	</filter>
-  	<filter-mapping>
-  		<filter-name>encodingFilter</filter-name>
-  		<url-pattern>/*</url-pattern>
-  	</filter-mapping>
-  	
-  	<!-- #2. springSecurityFilterChain 등록 -->
-  	<filter>
-  		<filter-name>springSecurityFilterChain</filter-name>
-  		<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
-  	</filter>
-  	<filter-mapping>
-  		<filter-name>springSecurityFilterChain</filter-name>
-  		<url-pattern>/*</url-pattern>
-  	</filter-mapping>
+	<filter-mapping>
+		<filter-name>encodingFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	
+	<!-- 
+		Multipart형식의 데이터를 처리하기 위한 필터 설정
+		- DispacherServlet이 Request를 파싱하기 전, Filter단계에서 파싱하는 필터
+		why?
+		- 사용자가 multipart/form-data 형식으로 요청을 전송한 경우,
+	  	  Spring의 DispatcherServlet은 요청을 MultipartHttpServletRequest로 파싱
+     	- 단, Secuirty의 filterChain은 dispatcherServlet보다 먼저 실행되며
+     	  이 시점은 request를 파싱하기 전이므로, request에 담긴 csrf토큰의 데이터를 제대로
+     	  읽어올 수 없음.
+		- 이로 인해 CSRF인증 오류로 접근거부가 발생
+		- 이를 방지하기 위해 dispatcherServlet이 실행되기전 filter단계에서 Multipart요청을
+		  먼저 파싱할 수 있도록 필터 등록이 필요.
+	 -->
+	<filter>
+		<filter-name>multipartFilter</filter-name>
+		<filter-class>org.springframework.web.multipart.support.MultipartFilter
+		</filter-class>
+		<!-- root.xml에 등록한 multipartResolver등록 -->
+		<init-param>
+			<param-name>multipartResolverBeanName</param-name>
+			<param-value>multipartResolver</param-value>
+		</init-param>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>multipartFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+	<!-- #2. springSecurityFilterChain 등록 -->
+	<filter>
+		<filter-name>springSecurityFilterChain</filter-name>
+		<filter-class>org.springframework.web.filter.DelegatingFilterProxy
+		</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>springSecurityFilterChain</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
 
 </web-app>

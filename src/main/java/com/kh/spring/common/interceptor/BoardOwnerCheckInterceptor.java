@@ -24,7 +24,13 @@ public class BoardOwnerCheckInterceptor implements HandlerInterceptor {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		Member loginUser = (Member) authentication.getPrincipal();
 		int loginUserNo = loginUser.getUserNo();
-
+		
+		if (authentication.getAuthorities()
+				.stream()
+				.anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"))) {
+	        return true;
+	    }
+		
 		// 2. 요청 URI에서 게시글 번호 추출 (예: /board/update/1001)
 		String[] uriParts = request.getRequestURI().split("/");
 		int boardNo = Integer.parseInt(uriParts[uriParts.length - 1]);

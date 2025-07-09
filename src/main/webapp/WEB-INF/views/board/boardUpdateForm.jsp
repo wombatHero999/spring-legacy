@@ -34,45 +34,45 @@
 						<th>작성자</th>
 						<td>${board.userName }</td>
 					</tr>
+					<c:if test="${not empty board.imgList }">
+						<c:forEach items="${board.imgList }" var="boardImg" varStatus="i">
+							<c:choose>
+								<c:when test="${boardImg.imgLevel == 0}">
+									<c:set var="img0" value="${contextPath }${boardImg.changeName}" />
+									<c:set var="img0no" value="${boardImg.boardImgNo}"/>									
+								</c:when>
+								<c:when test="${boardImg.imgLevel == 1}">
+									<c:set var="img1" value="${contextPath }${boardImg.changeName}" />
+									<c:set var="img1no" value="${boardImg.boardImgNo}"/>									
+								</c:when>
+								<c:when test="${boardImg.imgLevel == 2}">
+									<c:set var="img2" value="${contextPath }${boardImg.changeName}" />
+									<c:set var="img2no" value="${boardImg.boardImgNo}"/>									
+								</c:when>
+								<c:when test="${boardImg.imgLevel == 3}">
+									<c:set var="img3" value="${contextPath }${boardImg.changeName}" />
+									<c:set var="img3no" value="${boardImg.boardImgNo}"/>									
+								</c:when>
+							</c:choose>
+						</c:forEach>
+					</c:if>
 					<c:if test="${boardCode ne 'P' }">
 						<tr>
 							<th>첨부파일</th>
 							<td><input type="file" id="upfile" class="form-control" name="upfile">
 								${board.imgList[0].originName }
-								<input type="hidden" name="originName" value="${board.imgList[0].originName }"/>
-								<input type="hidden" name="changeName" value="${board.imgList[0].changeName }"/>
+								<input type="hidden" name="imgNo" value="${empty img0no ? 0 : img0no }" />
 							</td>
 						</tr>
 					</c:if>
 					<c:if test="${boardCode eq 'P'}">
-						<c:if test="${not empty board.imgList }">
-							<c:forEach items="${board.imgList }" var="boardImg" varStatus="i">
-								<c:choose>
-									<c:when test="${boardImg.imgLevel == 0}">
-										<c:set var="img0" value="${contextPath }${boardImg.changeName}" />
-										<c:set var="img0no" value="${boardImg.boardImgNo}"/>									
-									</c:when>
-									<c:when test="${boardImg.imgLevel == 1}">
-										<c:set var="img1" value="${contextPath }${boardImg.changeName}" />
-										<c:set var="img1no" value="${boardImg.boardImgNo}"/>									
-									</c:when>
-									<c:when test="${boardImg.imgLevel == 2}">
-										<c:set var="img2" value="${contextPath }${boardImg.changeName}" />
-										<c:set var="img2no" value="${boardImg.boardImgNo}"/>									
-									</c:when>
-									<c:when test="${boardImg.imgLevel == 3}">
-										<c:set var="img3" value="${contextPath }${boardImg.changeName}" />
-										<c:set var="img3no" value="${boardImg.boardImgNo}"/>									
-									</c:when>
-								</c:choose>
-							</c:forEach>
-						</c:if>
 						<tr>
 							<th><label  for="image">업로드 이미지1</label></th>
 							<td>
 							<img class="preview" src="${img0 }">
 							<input type="file" name="upfile" class="form-control inputImage" accept="images/*" id="img1">
 							<span class="delete-image" data-no="${img0no}">&times;</span>
+							<input type="hidden" name="imgNo" value="${empty img0no ? 0 : img0no }" />
 							</td>
 						</tr>
 						<tr>
@@ -81,6 +81,8 @@
 							<img class="preview" src="${img1 }">
 							<input type="file" name="upfile" class="form-control inputImage" accept="images/*" id="img2">
 							<span class="delete-image" data-no="${img1no}">&times;</span>
+							<input type="hidden" name="imgNo" value="${empty img1no  ? 0 : img1no}" />
+							</td>
 						</tr>
 						<tr>
 							<th><label  for="image">업로드 이미지3</label></th>
@@ -88,7 +90,8 @@
 							<img class="preview"  src="${img2 }">
 							<input type="file" name="upfile" class="form-control inputImage" accept="images/*" id="img3">
 							<span class="delete-image" data-no="${img2no}">&times;</span>
-							</td>
+							<input type="hidden" name="imgNo" value="${empty img2no  ? 0 : img2no}" />
+							</td>	
 						</tr>
 						<tr>
 							<th><label  for="image">업로드 이미지4</label></th>
@@ -96,6 +99,7 @@
 							<img class="preview"  src="${img3 }">
 							<input type="file" name="upfile" class="form-control inputImage" accept="images/*" id="img4">
 							<span class="delete-image" data-no="${img3no}">&times;</span>
+							<input type="hidden" name="imgNo" value="${empty img3no ? 0 : img3no}" />
 							</td>
 						</tr>
 					</c:if>	
@@ -126,7 +130,7 @@
 			const inputImage = document.querySelectorAll('.inputImage'); // input type = file
 			const preview = document.querySelectorAll('.preview'); // img
 			const deleteImage = document.querySelectorAll('.delete-image'); // 삭제버튼들
-			
+			const imgNoInputs = document.querySelectorAll('input[name="imgNo"]'); // imgNo hidden input들
 			const deleteList = document.querySelector("#deleteList"); // hidden태그
 			const deleteSet = new Set(); // 키값이 중복이 안됨. 
 			
@@ -147,6 +151,9 @@
 					console.log(no);
 					if(no != undefined && no) deleteSet.add(no);
 					deleteList.value = [...deleteSet];
+					
+					// hidden input value 0으로 설정
+		            imgNoInputs[index].value = 0;
 				})
 				
 				deleteImage[index].addEventListener('click', function(){
@@ -162,6 +169,9 @@
 						if(no != undefined && no) deleteSet.add(no)
 						// 저장되어있떤 이미지를 "삭제"
 						deleteList.value = [...deleteSet]; // 객체(set)를 배열로 변환
+						
+						// hidden input value 0으로 설정
+			            imgNoInputs[index].value = 0;
 					}
 				})
 			})

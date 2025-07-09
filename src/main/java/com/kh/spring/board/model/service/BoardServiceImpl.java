@@ -117,8 +117,8 @@ public class BoardServiceImpl implements BoardService{
 	
 	@Transactional(rollbackFor = {Exception.class})
 	@Override
-	public int updateBoard(Board board , String deleteList , List<MultipartFile> upfiles) throws Exception {
-		
+	public int updateBoard(Board board ,List<BoardImg> imgList, String deleteList) {
+		// 1) XSS, 개행 처리 후 추가
 		board.setBoardContent(Utils.XSSHandling(board.getBoardContent()));
 		board.setBoardContent(Utils.newLineHandling(board.getBoardContent()));
 		board.setBoardTitle(Utils.XSSHandling(board.getBoardTitle()));
@@ -126,58 +126,37 @@ public class BoardServiceImpl implements BoardService{
 		//게시글 업데이트
 		int result = boardDao.updateBoard(board);
 		
-		//이미지 및 첨부파일 등록
-		String webPath = "/resources/images/board/"+board.getBoardCd()+"/";
-		String serverFolderPath = application.getRealPath(webPath);
+		if(result == 0) throw new RuntimeException("게시글 수정 실패");
 		
-		if(result > 0) {
-			// 업로드된 이미지들 분류작업.
-			List<BoardImg> imgList = new ArrayList();
-			
-			if(upfiles != null) { // 일반게시판,자유게시판에서는 upfiles가 null임.
-				for(int i =0; i<upfiles.size(); i++) {
-					if(!upfiles.get(i).isEmpty()) {
-						//Utils.saveFile(upfiles.get(i), serverFolderPath);
-						String changeName = "";
-						
-						// BoardImg객체 생성후, 필요한값들 추가해서 imgList에 추가.
-						BoardImg bi = new BoardImg();
-						bi.setChangeName(changeName);
-						bi.setOriginName(upfiles.get(i).getOriginalFilename());
-						bi.setRefBno(board.getBoardNo());
-						bi.setImgLevel(i);
-						
-						imgList.add(bi);
-					}
+		// 2) 이미지파일들 정보 수정 => UPDATE ,INSERT, DELETE
+		// 사진이 없던곳에 새롭게 추가된경우 -> INSERT
+		// 사진이 있던곳에 새롭게 추가된경우 -> UPDATE -> DELETE후 INSERT
+		// 사진이 있던곳에 삭제가 된경우 -> DELETE
+		// 사진이 있거나,없던곳에 그대로 없는경우 -> X
+		
+		
+		// x버튼을 눌러서 이미지를 삭제하고자 하는 경우
+		if(deleteList != null && !deleteList.equals("")) {
+			result = boardDao.deleteBoardImg(deleteList);
+		}
+		if(!imgList.isEmpty()) {	
+			// 새롭게 추가된 첨부파일이 존재하는 경우
+			for( BoardImg bi  : imgList) {
+				if(bi.getBoardImgNo() == 0) {// 새롭게 추가된 경우 insert
+					result = boardDao.insertBoardImg(bi);
 				}
-			}
-			// x버튼을 눌러서 이미지를 삭제하고자 하는 경우
-			if(deleteList != null && !deleteList.equals("")) {
-				//삭제하기위해서는 board_img_no가 필요함
-				
-				result = boardDao.deleteBoardImg(deleteList);
-			}
-			
-			// db에서 삭제처리 완료 했거나 혹은 게시판 업데이트 성공시
-			if(result > 0) {
-				// BoardImg객체 하나하나 업데이트 .
-				
-				for( BoardImg bi  : imgList) {
+				else {
 					result = boardDao.updateBoardImg(bi);
-					
-					//result값은 1 혹은 0으로 반환
-					// result == 0 ? 실패 -> 기존에 이미지가 없던 경우.
-					// result == 1 ? 성공 -> 기존에 이미지가 있던 경우.
-					if(result == 0) {
-						result = boardDao.insertBoardImg(bi);
-					}
 				}
 				
+				if(result == 0) {
+					throw new RuntimeException("게시글 수정 실패");
+				}
 			}
 		}
 		
-		throw new Exception("dd");
-		//return result;
+		
+		return result;
 	}
 
 	@Override

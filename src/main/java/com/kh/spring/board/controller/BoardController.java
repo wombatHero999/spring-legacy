@@ -389,10 +389,12 @@ public class BoardController {
 			@ModelAttribute Board board,
 			@PathVariable("boardCode") String boardCode,
 			@PathVariable("boardNo") int boardNo,
+			Authentication authentication,
 			RedirectAttributes ra, 
 			Model model,			
 			@RequestParam(value = "upfile", required = false) List<MultipartFile> upfiles,			
-			String deleteList 
+			String deleteList ,
+			@RequestParam(value = "imgNo", required = false) List<Integer> imgNoList
 	) {
 		// 다음 업무로직의 순서에 맞춰 코드를 작성
 		// 0. 유효성검사(생략)
@@ -413,35 +415,56 @@ public class BoardController {
 		//    1) 실패시 에러반환
 		//    2) 성공시 작업했떤 view페이지로 redirect
 		
-		// 1) Board테이블 정보수정 => Update
+		// #1 게시글 수정 권한체크
+		// 1. 관리자
+		// 2. 게시글 작성자 -> 게시글정보 조회후 체크 필요 or jsp에서 userno넘겨주기(비권장)
+		BoardExt b = boardService.selectBoard(boardNo);
+		if(b == null) throw new RuntimeException("게시글 수정 실패");
+		
+		int userNo = ((Member)authentication.getPrincipal()).getUserNo();
+		if (!(authentication.getAuthorities()
+				.stream()
+				.anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"))
+				 || userNo == Integer.parseInt(b.getBoardWriter()))) {
+			 throw new RuntimeException("게시글 수정 권한 없음");
+	    }
+		
+		// #2 첨부파일 등록
+		List<BoardImg> imgList = new ArrayList<>(); // 배열형태의 BoardImg객체를 저장할 imgList
+		int level = 0; // 첨부파일의 레벨. 0은 썸네일 혹은 첨부파일을 의미함.
+		// 사진게시판에서 썸네일파일과 아닌 파일을 구분하기 위해 사용.
+		for (MultipartFile upfile : upfiles) {
+			BoardImg bi = new BoardImg();
+			if (upfile.isEmpty()) {
+				continue;
+			}
+			String changeName = Utils.saveFile(upfile, application, boardCode);
+			bi.setOriginName(upfile.getOriginalFilename());
+			bi.setChangeName(changeName);
+			// 첨부파일 번호 바인딩(값이 없는 경우 0) - 업데이트용
+			// level을 인덱스로 이용하여 첨부파일 번호 가져오기
+			bi.setBoardImgNo(imgNoList.get(level)); 
+			bi.setImgLevel(level++);
+			bi.setRefBno(boardNo); // 게시글번호 추가
+			imgList.add(bi);
+		}
+		
 		board.setBoardNo(boardNo);
 		board.setBoardCd(boardCode);
-		log.info("board ?? {} deleteList ?? {} ", board, deleteList); // boardNo, boardTitle, boardContent
-
-		int result = 0;
-		try {
-			result = boardService.updateBoard(board, deleteList, upfiles);
-		} catch (Exception e) {
-			e.printStackTrace();
+		
+		log.debug("board :{}" , board);
+		log.debug("imgList :{}" , imgList);
+		log.debug("deleteList" , deleteList);
+		
+		//3. 게시글 , 첨부파일 수정 서비스 요청
+		int result = boardService.updateBoard(board, imgList, deleteList);
+		
+		// 작업결과에 따른 페이지 지정
+		if(result == 0) {
+			throw new RuntimeException("게시판 수정 실패");
 		}
-
-		// 2) 이미지파일들 정보 수정 => UPDATE ,INSERT, DELETE
-		// 사진이 없던곳에 새롭게 추가된경우 -> INSERT
-		// 사진이 있던곳에 새롭게 추가된경우 -> UPDATE
-		// 사진이 있던곳에 삭제가 된경우 -> DELETE
-		// 사진이 있거나,없던곳에 그대로 없는경우 -> X
-
-		// 3) 작업결과에 따른 페이지 지정
-		if (result > 0) {
-			// board/list/C
-			// board/update/C/6
-			// 수정 성공시 list로 리다이렉트 되도록 설정(상대경로방식으로)
-			ra.addFlashAttribute("alertMsg", "게시글 수정 성공 ㅎㅎ");
-			return "redirect:../../list/" + boardCode;
-		} else {
-			model.addAttribute("errorMsg", "게시글 수정 실패");
-			return "common/errorPage";
-		}
+		ra.addFlashAttribute("alertMsg", "게시글 수정 성공");
+		return "redirect:/board/detail/" + boardCode+"/"+boardNo;
 	}
 
 }

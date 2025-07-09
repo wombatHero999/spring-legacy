@@ -249,7 +249,6 @@
 		UPDATE BOARD 
 		SET BOARD_TITLE = #{boardTitle} ,
 			BOARD_CONTENT = #{boardContent}
-		
 		WHERE BOARD_NO = #{boardNo}
 	</update>	
 	
@@ -258,32 +257,6 @@
 		DELETE FROM BOARD_IMG
 		WHERE BOARD_IMG_NO IN (${deleteList})
 	</delete>
-	
-	<update id="updateBoardImg" parameterType="boardImg">
-		UPDATE BOARD_IMG SET
-		ORIGIN_NAME = #{originName} , 
-		CHANGE_NAME = #{changeName}
-		WHERE REF_BNO = #{refBno} AND IMG_LEVEL= #{imgLevel}
-	</update>
-	
-	<select id="selectFileList" resultType="string">
-		SELECT
-			'/resources/images/board/T/' || CHANGE_NAME
-		FROM BOARD_IMG
-		
-		UNION
-		
-		SELECT
-			'/resources/images/board/' || BOARD_CD || '/' || CHANGE_NAME
-		FROM BOARD
-		WHERE CHANGE_NAME IS NOT NULL
-	</select>	
-	
-	<select id="selectBoardTypeList" resultType='boardType'>
-		SELECT *
-		FROM BOARD_TYPE
-		ORDER BY BOARD_CD
-	</select>
 	
 	<insert id="insertBoardImg">
 		INSERT INTO BOARD_IMG
@@ -294,13 +267,34 @@
 			REF_BNO,
 			IMG_LEVEL			
 		) VALUES (
-			SEQ_INO.NEXTVAL,
+			SEQ_IMG_NO.NEXTVAL,
 			#{originName} ,
 			#{changeName} ,
 			#{refBno} ,
 			#{imgLevel}
 		)
 	</insert>	
+	<update id="updateBoardImg" parameterType="boardImg">
+		UPDATE BOARD_IMG SET
+		ORIGIN_NAME = #{originName} , 
+		CHANGE_NAME = #{changeName}
+		WHERE BOARD_IMG_NO = #{boardImgNo}
+	</update>
+	
+	<select id="selectFileList" resultType="string">
+		SELECT
+			CHANGE_NAME
+		FROM BOARD_IMG
+	</select>	
+	
+	<select id="selectBoardTypeList" resultType='boardType'>
+		SELECT *
+		FROM BOARD_TYPE
+		ORDER BY BOARD_CD
+	</select>
+	
+	
+
 	
 	
 </mapper>

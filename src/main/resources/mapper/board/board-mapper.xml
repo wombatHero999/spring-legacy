@@ -182,8 +182,6 @@
 			BOARD_CONTENT,
 			COUNT,
 			CREATE_DATE,
-			B.ORIGIN_NAME,
-			B.CHANGE_NAME,
 			BOARD_CD,
 			
 			BI.ORIGIN_NAME IMG_ORIGIN_NAME,
@@ -207,7 +205,6 @@
 		<result column="USER_NAME" property="userName" />
 		<!-- VO클래스를 매핑할때 필요한 태그(association) -->
 		<!-- <association property="user" resultMap="memberResultSet" /> -->
-		
 		
 		<!-- 
 			collection ofType : 제네릭

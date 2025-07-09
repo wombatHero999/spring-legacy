@@ -35,7 +35,7 @@ public class Utils {
 		String originName = upfile.getOriginalFilename();
 		String currentTime = new java.text.SimpleDateFormat("yyyyMMddHHmmss").format(new java.util.Date());
 		int random = (int)(Math.random() * 90000 + 10000); // 10000~99999 5자리 랜덤값
-		String ext = originName.substring(originName.indexOf(".")); // .
+		String ext = originName.substring(originName.lastIndexOf(".")); // .
 		
 		String changeName = currentTime +  random  +  ext ;
 		
@@ -46,7 +46,7 @@ public class Utils {
 			e.printStackTrace();
 		}
 		
-		return changeName;
+		return webPath+changeName;
 	}
 	
 	//크로스 사이트 스크립트 공격을 방지하기위한 메소드

@@ -172,20 +172,18 @@ public class BoardController {
 		// - 첨부파일 관리를 위해 DB에 파일 위치정보 저장필요
 		// - BOARD_IMG객체 생성후 파일의 저장경로, 원본명 저장.
 		List<BoardImg> imgList = new ArrayList<>(); // 배열형태의 BoardImg객체를 저장할 imgList
-		if (upfiles != null) {
-			int level = 0; // 첨부파일의 레벨. 0은 썸네일 혹은 첨부파일을 의미함.
-			// 사진게시판에서 썸네일파일과 아닌 파일을 구분하기 위해 사용.
-			for (MultipartFile upfile : upfiles) {
-				if (upfile.isEmpty()) {
-					continue;
-				}
-				String changeName = Utils.saveFile(upfile, application, boardCode);
-				BoardImg bi = new BoardImg();
-				bi.setOriginName(upfile.getOriginalFilename());
-				bi.setChangeName(changeName);
-				bi.setImgLevel(level++);
-				imgList.add(bi);
+		int level = 0; // 첨부파일의 레벨. 0은 썸네일 혹은 첨부파일을 의미함.
+		// 사진게시판에서 썸네일파일과 아닌 파일을 구분하기 위해 사용.
+		for (MultipartFile upfile : upfiles) {
+			if (upfile.isEmpty()) {
+				continue;
 			}
+			String changeName = Utils.saveFile(upfile, application, boardCode);
+			BoardImg bi = new BoardImg();
+			bi.setOriginName(upfile.getOriginalFilename());
+			bi.setChangeName(changeName);
+			bi.setImgLevel(level++);
+			imgList.add(bi);
 		}
 		// 3. 게시글 등록 서비스 호출
 		// - 서비스 호출 전, 게시글 정보 바인딩 필요
@@ -317,47 +315,60 @@ public class BoardController {
 	}
 
 
-	// 첨부파일 / 이미지 수정하기.
-	// + 첨부파일이나 이미지 수정하는 경우, 웹서버에 저장된 파일 신경쓰지 말기. db정보만 바꿔주기
-	@GetMapping("/fileDownload/{boardNo}")
-	public ResponseEntity<Resource> fileDownload(@PathVariable("boardNo") int boardNo) {
+	// #6. 첨부파일 다운로드 기능
+		@GetMapping("/fileDownload/{boardNo}")
+		// ResponseEntity<Resource>: 
+		//  - Spring에서 응답 상태 코드, 헤더, 바디(리소스 파일 등)를 함께 커스터마이징하여 반환할 수 있는 객체.
+		//  - 파일 다운로드나 REST API 응답 구성 시 유용하게 사용됨.
+		public ResponseEntity<Resource> fileDownload(@PathVariable("boardNo") int boardNo) {
+			// 업무로직
+			// 1. 게시글(첨부파일) 정보 조회		
+			//    1)게시글이 없으면 에러객체 반환		
+			// 2. 게시글의 changeName을 바탕으로 첨부파일 조회.		
+			//    2) 첨부파일이 없으면 에러객체 반환
+			// 3. 첨부파일 자원 로드하여 사용자에게 반환
+			//   1) 성공시 파일 다운로드
 
-		ResponseEntity<Resource> responseEntity = null;
-		// db에서 board테이블에서 boardNo값과 일치하는 행의 파일정보 조회
-		BoardExt b = boardService.selectBoard(boardNo);
+			ResponseEntity<Resource> responseEntity = null;
+			// db에서 board테이블에서 boardNo값과 일치하는 행의 파일정보 조회
+			BoardExt b = boardService.selectBoard(boardNo); // 메서드 재사용
 
-		if (b.getOriginName() == null) {
-			return ResponseEntity.notFound().build(); // 응답상태 404로 설정후 반환
+			if (b.getOriginName() == null) {
+				return ResponseEntity.notFound().build(); // 응답상태 404로 설정후 반환
+			}
+
+			// Resource객체로 파일 얻어오기
+			String saveDirectory = application.getRealPath("/resources/images/board/" + b.getBoardCd() + "/");
+			File downFile = new File(saveDirectory, b.getChangeName());// 디렉토리 경로(saveDirectory)상에서
+			// 두번째 매개변수로 전달받은 파일을 찾아서 객체 생성
+			Resource resource = resourceLoader.getResource("file:" + downFile);
+			try {
+				String filename = new String(b.getOriginName().getBytes("utf-8"), "iso-8859-1");
+				// utf-8방식으로 인코딩된 데이터(문자열)을 iso-8859-1로 변환 -> http통신할때 인코딩방식을 iso-8859-1로 해야하기
+				// 때문.
+				responseEntity = ResponseEntity.ok()
+						// 내가 넘겨주고자하는 데이터가 바이너리형식의 데이터임을 의미.
+						.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE)
+						// CONTENT_DISPOSITION : attachment;filename=파일명 형식으로 설정하여 브라우저가 파일로 인식할수 있도록 설정.
+						.header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + filename).body(resource);
+
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
+
+			return responseEntity;
 		}
-
-		// Resource객체로 파일 얻어오기
-		String saveDirectory = application.getRealPath("/resources/images/board/" + b.getBoardCd() + "/");
-		File downFile = new File(saveDirectory, b.getChangeName());// 디렉토리 경로(saveDirectory)상에서
-		// 두번째 매개변수로 전달받은 파일을 찾아서 객체 생성
-		Resource resource = resourceLoader.getResource("file:" + downFile);
-		try {
-			String filename = new String(b.getOriginName().getBytes("utf-8"), "iso-8859-1");
-			// utf-8방식으로 인코딩된 데이터(문자열)을 iso-8859-1로 변환 -> http통신할때 인코딩방식을 iso-8859-1로 해야하기
-			// 때문.
-
-			responseEntity = ResponseEntity.ok()
-					// 내가 넘겨주고자하는 데이터가 바이너리형식의 데이터임을 의미.
-					.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE)
-					// CONTENT_DISPOSITION : 파일을 첨부파일 형태로 처리하겠다는 의미(다운로드)
-					.header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + filename).body(resource);
-
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
-
-		return responseEntity;
-	}
-	
+	// 인터셉터 이용하여 게시글 수정권한 체크로직 추가
+		
 	// 일반게시판 수정하기기능(실습문제)
 	@GetMapping("/update/{boardCode}/{boardNo}")
 	public String updateBoard(@PathVariable(value = "boardCode") String boardCode, @PathVariable("boardNo") int boardNo,
 			Model model) {
-		// 업무로직을 생각 한 후 순서에 맞춰 구현해보기
+		// 다음 업무로직의 순서에 맞춰 코드를 작성
+		// 1. 현재 게시글을 수정할 수 있는 사용자인지 체크.
+		// 2. 게시글 정보 조회(BoardExt)
+		//     - 게시글 CONTENT에 대해서 newLineClear메서드를 통해 개행문자 원복
+		// 3. model영역에 게시글정보 추가하여 forward
 		
 		// 게시글정보(selectBoard), 첨부파일정보 조회후 함께 전달.
 		BoardExt board = boardService.selectBoard(boardNo);
@@ -374,16 +385,34 @@ public class BoardController {
 	}
 
 	@PostMapping("/update/{boardCode}/{boardNo}")
-	public String updateBoard2(Board board, @PathVariable("boardCode") String boardCode,
+	public String updateBoard2(
+			@ModelAttribute Board board,
+			@PathVariable("boardCode") String boardCode,
 			@PathVariable("boardNo") int boardNo,
-			// 리다이렉트할때 request스코프에 저장시킬 데이터를 담아주는 변수
-			RedirectAttributes ra, Model model,
-			// 첨부파일
-			@RequestParam(value = "upfile", required = false) MultipartFile upfile,
-			// 이미지파일들
-			@RequestParam(value = "upfiles", required = false) List<MultipartFile> upfiles, String deleteList // [1,2,3]
+			RedirectAttributes ra, 
+			Model model,			
+			@RequestParam(value = "upfile", required = false) List<MultipartFile> upfiles,			
+			String deleteList 
 	) {
-
+		// 다음 업무로직의 순서에 맞춰 코드를 작성
+		// 0. 유효성검사(생략)
+		// 1. 현재 게시글을 수정할 수 있는 사용자인지 체크. 
+		// 2. 새롭게 등록한 첨부파일이 있는지 체크 후 저장
+		// 3. 게시글 , 첨부파일 수정 서비스 요청
+		//    1) UPDATE에 필요한 데이터를 추가로 바인딩
+		//    서비스 내부 로직
+		//    1. 게시글 수정
+		//       1) XSS, 개행 처리 후 추가
+		//    2. 첨부파일 수정 -> INSERT, UPDATE, DELETE
+		//       1) 새롭게 등록한 첨부파일이 없는 경우 -> 아무것도 하지 않음
+		//       2) 첨부파일이 없던 게시글에 새롭게 추가한 경우 -> INSERT
+		//       3) 첨부파일이 있던 게시글에 새롭게 추가한 경우 -> UPDATE
+		//       4) 첨부파일이 있던 게시글에 첨부파일은 삭제한 경우 -> DELETE
+		//        - 사용하지 않게 된 첨부파일에 대해서는 고려하지 않아도 상관 없음.(스케쥴러를 통해 정리예정)
+		// 3. 처리 결과에 따라 응답 페이지 지정 
+		//    1) 실패시 에러반환
+		//    2) 성공시 작업했떤 view페이지로 redirect
+		
 		// 1) Board테이블 정보수정 => Update
 		board.setBoardNo(boardNo);
 		board.setBoardCd(boardCode);
@@ -391,7 +420,7 @@ public class BoardController {
 
 		int result = 0;
 		try {
-			result = boardService.updateBoard(board, deleteList, upfile, upfiles);
+			result = boardService.updateBoard(board, deleteList, upfiles);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

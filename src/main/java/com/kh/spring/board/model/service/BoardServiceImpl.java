@@ -117,7 +117,7 @@ public class BoardServiceImpl implements BoardService{
 	
 	@Transactional(rollbackFor = {Exception.class})
 	@Override
-	public int updateBoard(Board board , String deleteList , MultipartFile upfile, List<MultipartFile> upfiles) throws Exception {
+	public int updateBoard(Board board , String deleteList , List<MultipartFile> upfiles) throws Exception {
 		
 		board.setBoardContent(Utils.XSSHandling(board.getBoardContent()));
 		board.setBoardContent(Utils.newLineHandling(board.getBoardContent()));
@@ -137,8 +137,8 @@ public class BoardServiceImpl implements BoardService{
 			if(upfiles != null) { // 일반게시판,자유게시판에서는 upfiles가 null임.
 				for(int i =0; i<upfiles.size(); i++) {
 					if(!upfiles.get(i).isEmpty()) {
-						
-						String changeName = "";//Utils.saveFile(upfiles.get(i), serverFolderPath);
+						//Utils.saveFile(upfiles.get(i), serverFolderPath);
+						String changeName = "";
 						
 						// BoardImg객체 생성후, 필요한값들 추가해서 imgList에 추가.
 						BoardImg bi = new BoardImg();

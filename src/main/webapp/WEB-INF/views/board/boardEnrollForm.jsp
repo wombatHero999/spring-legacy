@@ -54,13 +54,13 @@
 						<td><sec:authentication property="principal.userName"/>
 						</td>
 					</tr>
-					<c:if test="${boardCode ne 'T' }">
+					<c:if test="${boardCode ne 'P' }">
 						<tr>
 							<th>첨부파일</th>
 							<td><input type="file" id="upfile" class="form-control" name="upfile"></td>
 						</tr>
 					</c:if>
-					<c:if test="${boardCode eq 'T'}">
+					<c:if test="${boardCode eq 'P'}">
 						<tr>
 							<th><label  for="image">업로드 이미지1</label></th>
 							<td>
@@ -108,7 +108,7 @@
 		</div>
 	</div>	
 	
-	<c:if test="${boardCode eq 'T'}">	
+	<c:if test="${boardCode eq 'P'}">	
 		<script>
 			const inputImage = document.querySelectorAll('.inputImage'); // input type = file
 			const preview = document.querySelectorAll('.preview'); // img

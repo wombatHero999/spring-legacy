@@ -2,6 +2,7 @@
     pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -80,11 +81,11 @@
          </table>
          
          <br>
-         
-         <div align="center">
-            <a class="btn btn-primary" href="${contextPath }/board/update/${boardCode}/${board.boardNo}">수정하기</a>
-         </div>         
-         
+        
+         <sec:authorize access="hasRole('ROLE_ADMIN') or principal.userNo.toString() == #board.boardWriter">
+		    <a href="${pageContext.request.contextPath}/board/update/${boardCode }/${board.boardNo}" class="btn btn-sm btn-primary">수정</a>
+		</sec:authorize>
+		         
          <br><br>
          
          <table id="replyArea" class="table" align="center">

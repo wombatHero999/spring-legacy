@@ -29,4 +29,26 @@
 	<tx:annotation-driven transaction-manager="transactionManager"/>
 	 
 	
+	<!-- ======================= Intercepter 시작 ====================== -->
+	<!-- 
+		인터셉터(Interceptor)
+		  - DispatcherServlet → Controller 사이에서 요청(request)을 가로채는 컴포넌트
+		  - 공통 관심사(로그인, 권한 체크, 로깅 등)를 분리하여 관리할 수 있음 (AOP와 유사한 역할)
+		  - 스프링의 빈 객체로 등록되므로 다른 서비스, DAO 등의 의존성 주입이 가능함
+	
+	 	사용 목적 예시:
+		  - 로그인 여부 확인
+		  - 특정 URL 접근 제한 (권한 처리)
+		  - 요청/응답 시간 측정
+		  - 공통 데이터 처리 (예: 게시판 분류 목록 조회)
+	
+	-->
+	<interceptors>
+	 	<interceptor>
+	 		<mapping path="/board/update/**"/>
+	 		<mapping path="/board/delete/**"/>
+	 		<beans:bean class="com.kh.spring.common.interceptor.BoardOwnerCheckInterceptor"/>
+	 	</interceptor>
+	</interceptors>
+	<!-- ======================= Intercepter 끝 ====================== -->
 </beans:beans>

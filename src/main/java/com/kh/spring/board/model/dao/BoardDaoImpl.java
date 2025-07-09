@@ -90,10 +90,10 @@ public class BoardDaoImpl implements BoardDao {
 	@Override
 	public BoardExt selectBoard(int boardNo) {
 		// 버전1) 쿼리문 한번실행
-		return sqlSession.selectOne("boardMapper.selectBoard", boardNo);
+		//return sqlSession.selectOne("boardMapper.selectBoard", boardNo);
 
 		// 버전2) 쿼리문 두번실행
-		// return sqlSession.selectOne("boardMapper.selectBoardOnly",boardNo);
+		return sqlSession.selectOne("boardMapper.selectBoardOnly",boardNo);
 	}
 
 	@Override

@@ -106,7 +106,7 @@ public class SecurityController {
 	    String encryptedPassword = passwordEncoder.encode(member.getUserPwd());
 	    member.setUserPwd(encryptedPassword);
 
-	    // 저장시 하나의 트랜잭션으로 회원+권한을 함께 저장.
+	    // 저장시 하나의 트랜잭션으로 회원+권한을 함께 저장. -> 로직구현 알아서하기
 	    mService.insertMember(member);
 
 	    return "redirect:/member/login";

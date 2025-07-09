@@ -49,6 +49,33 @@
   		<url-pattern>/*</url-pattern>
   	</filter-mapping>
   	
+  	<!-- 
+  		Multipart형식의 데이터를 처리하기 위한 필터
+  		 - DispactherServlet이 Reuqest를 MultipartRequest로 파싱하기전 , 
+  		   Filter단계에서 파싱하도록 하는 필터
+  		why?
+  		 - 사용자가 multipart/form-data형식으로 요청을 전송한 경우
+  		 Spring의 DispatcherSevlet은 요청내용을 MultipartRequest로 파싱한다.
+  		 - 단, Spring-Security모듈의 filterChain은 dispatcherServlet보다 먼저 실
+  		 행되며 이 시점에서는 request가 파싱되지 않았으므로 request에 담긴 보안토큰(csrf)의
+  		 데이터를 제대로 읽어올 수 없다
+  		 - 이로 인해 csrf인증 오류 발생.
+  	 -->
+  	<filter>
+		<filter-name>multipartFilter</filter-name>
+		<filter-class>org.springframework.web.multipart.support.MultipartFilter
+		</filter-class>
+		<!-- root.xml에 등록한 multipartResolver등록 -->
+		<init-param>
+			<param-name>multipartResolverBeanName</param-name>
+			<param-value>multipartResolver</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>multipartFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+  	
   	<!-- spring security filterchain 등록하기 -->
   	<filter>
   		<filter-name>springSecurityFilterChain</filter-name>

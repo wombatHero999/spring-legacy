@@ -57,9 +57,18 @@
 	 <!-- 
 	 	multipartResolver
 	 	 - Http요청 중 파일업로드형태(multipart)의 데이터가 전달되는 경우, 이를 처리해주는 bean객체
+	 	 - request객체를 상속받은 MultipartHttpServletRequest로 자동 변경해준다.
 	  -->
 	  <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
 	  	<property name="defaultEncoding" value="UTF-8"></property>
+	  	
+	  	<!-- 
+	  		maxUploadSize : 업로드 되는 전체 파일의 크기 제한 설정(바이트)
+	  		
+	  		maxInMemorySize : 업로드 처리시 디스크에 파일을 생성하기 전, 메모리에 보관할
+	  		파일의 최대 크기. 업로드한 파일의 크키가 inMemorySize보다 큰 경우 파일을 디스크에
+	  		임시 보관한다.
+	  	 -->
 	  	<property name="maxUploadSize" value="10000000"></property>
 	  	<property name="maxInMemorySize" value="2000000"></property>
 	  </bean>

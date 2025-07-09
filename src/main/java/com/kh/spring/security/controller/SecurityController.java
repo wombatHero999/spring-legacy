@@ -43,7 +43,7 @@ public class SecurityController {
 	}
 	
 	// 에러페이지 포워딩용 url
-	@GetMapping("/accessDenied")
+	@RequestMapping("/accessDenied")
 	public String accessDenied(Model model) {
 		model.addAttribute("errorMsg","접근불가!!!");
 		return "common/errorPage";

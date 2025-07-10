@@ -18,7 +18,7 @@
 			FileAppender    : 파일에 로그정보를 출력하는 클래스
 		 -->
 		<!-- 현재 콘솔객체에 대한 기본 출력 레벨 설정 -->
-		<param name="threshold" value="INFO"/>
+		<param name="threshold" value="debug"/>
 		 
 		<param name="Target" value="System.out" />
 		<layout class="org.apache.log4j.PatternLayout">

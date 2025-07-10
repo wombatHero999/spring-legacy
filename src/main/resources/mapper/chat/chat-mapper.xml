@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="chatMapper">
+	
+	<select id="selectChatRoomList" resultType="chatRoom">
+ 		SELECT
+		    CHAT_ROOM_NO ,
+		    TITLE,
+		    USER_NAME,
+		    (SELECT COUNT(*) FROM CHAT_ROOM_JOIN CRJ WHERE CRJ.CHAT_ROOM_NO = CR.CHAT_ROOM_NO) AS CNT
+		FROM CHAT_ROOM CR
+		JOIN MEMBER USING(USER_NO)
+		WHERE CR.STATUS = 'Y'
+		ORDER BY CHAT_ROOM_NO DESC
+	</select>
+	
+	<insert id="openChatRoom" parameterType="chatRoom" useGeneratedKeys="true">
+		
+		INSERT INTO CHAT_ROOM VALUES
+		(SEQ_CR_NO.NEXTVAL , #{title}, DEFAULT, #{userNo}  )
+		
+		<selectKey keyProperty="chatRoomNo" resultType="int" order="AFTER">
+			SELECT SEQ_CR_NO.CURRVAL FROM DUAL
+		</selectKey>
+		
+	</insert>
+	
+	
+	
+	<!-- 채팅방 참여여부 확인 -->
+	<select id="joinCheck" parameterType="chatRoomJoin" resultType="int">
+		SELECT
+			COUNT(*)
+		FROM CHAT_ROOM_JOIN
+		WHERE CHAT_ROOM_NO = #{chatRoomNo} AND USER_NO = #{userNo}
+	</select>
+	
+	<!-- 채팅방 참여하기 -->
+	<insert id="joinChatRoom" parameterType="chatRoomJoin">
+		INSERT INTO CHAT_ROOM_JOIN
+		VALUES(#{userNo},#{chatRoomNo})
+	</insert>
+	
+	<select id="selectChatMessage" parameterType="int" resultType="chatMessage">
+		SELECT
+			MESSAGE , 
+			TO_CHAR(CREATE_DATE , 'YYYY-MM-DD') CREATE_DATE,
+			USER_NAME,
+			USER_NO ,
+			CM_NO
+		FROM CHAT_MESSAGE
+		JOIN MEMBER USING(USER_NO)
+		WHERE CHAT_ROOM_NO = #{chatRoomNo}
+		ORDER BY CM_NO
+	</select>
+	
+	<insert id="insertMessage" parameterType="chatMessage">
+		INSERT INTO CHAT_MESSAGE 
+		VALUES (
+			SEQ_CM_NO.NEXTVAL , 
+			#{message} ,
+			SYSDATE , 
+			#{chatRoomNo} ,
+			#{userNo}		
+		)
+	</insert>
+	
+	<delete id="exitChatRoom" parameterType="chatRoomJoin">
+		DELETE FROM CHAT_ROOM_JOIN
+		WHERE USER_NO = #{userNo}
+		  AND CHAT_ROOM_NO = #{chatRoomNo} 
+	</delete>
+	
+	<select id="countChatRoomMember" parameterType="chatRoomJoin" resultType="int">
+		SELECT 
+			COUNT(*)
+		FROM CHAT_ROOM_JOIN
+		 WHERE CHAT_ROOM_NO = #{chatRoomNo} 
+	</select>
+	
+	<update id="closeChatRoom" parameterType="chatRoomJoin">
+		UPDATE CHAT_ROOM
+		   SET STATUS = 'N'
+		 WHERE CHAT_ROOM_NO = #{chatRoomNo}
+	</update>
+	
+</mapper>

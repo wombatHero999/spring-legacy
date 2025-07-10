@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.3.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+	
+	<!-- 
+		Spring Scheduler
+		 - 일정한 시간 간격이나 특정 시점에 자동으로 실행되어야 하는 작업이 있는경우 간단하게
+		  설정하고 수행할수 있도록 지원하는 스프링의 기능.
+		 - Timer 설정 없이 어노테이션만으로 간편하게 구성할 수 있다.
+		 - 기본 동작방식은 단일쓰레드 방식이며, 병렬 스케쥴링이 필요한 경우 별도 설정을 통해
+		   병렬실행도 가능.
+	 -->
+	<!-- 스케쥴링관련 어노테이션 활성화 -->
+	<task:annotation-driven scheduler="khScheduler" />
+	<!-- 스케쥴러가 포한된 클래스를 스캔 -->
+	<context:component-scan base-package="com.kh.spring.common.scheduling"></context:component-scan>
+	<context:component-scan base-package="com.kh.spring.board.model"></context:component-scan>
+	
+	<!-- 병렬 실행을 위한 스레드풀을 가지고 있는 Scheduler생성 -->
+	<task:scheduler id="khScheduler" pool-size="10"/>
+	
+</beans>
+
+
+
+
+
+
+
+
+
+

@@ -148,12 +148,43 @@
 		WHERE BOARD_NO = #{boardNo}
 	</update>
 	
+	<update id="updateBoard">
+		UPDATE BOARD SET
+			BOARD_TITLE = #{boardTitle},
+			BOARD_CONTENT = #{boardContent}
+		WHERE BOARD_NO = #{boardNo}
+	</update>
 	
+	<update id="updateBoardImg">
+		UPDATE BOARD_IMG SET
+		ORIGIN_NAME = #{originName},
+		CHANGE_NAME = #{changeName}
+		WHERE BOARD_IMG_NO = #{boardImgNo}		
+	</update>
 	
+	<insert id="insertBoardImg">
+		INSERT INTO BOARD_IMG
+		VALUES(
+			SEQ_IMG_NO.NEXTVAL,
+			#{originName},
+			#{changeName},
+			#{refBno},
+			#{imgLevel}
+		)
+	</insert>
+	
+	<delete id="deleteBoardImg">
+		DELETE FROM BOARD_IMG
+		WHERE BOARD_IMG_NO IN (${deleteList})
+	</delete>
 	
 	
   	
 </mapper>
+
+
+
+
 
 
 

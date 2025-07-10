@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -337,12 +338,12 @@ public class BoardController {
 			throw new RuntimeException("게시글이 존재하지 않습니다.");
 		}
 		
-		int boardWriter = Integer.parseInt(board.getBoardWriter());
-		int userNo = ((Member) authentication.getPrincipal()).getUserNo();
-		if(!(boardWriter == userNo || (authentication.getAuthorities().stream()
-				.anyMatch( authority -> authority.getAuthority().equals("ROLE_ADMIN") )) ) ) {
-			throw new RuntimeException("게시글 수정권한이 없습니다.");
-		}
+//		int boardWriter = Integer.parseInt(board.getBoardWriter());
+//		int userNo = ((Member) authentication.getPrincipal()).getUserNo();
+//		if(!(boardWriter == userNo || (authentication.getAuthorities().stream()
+//				.anyMatch( authority -> authority.getAuthority().equals("ROLE_ADMIN") )) ) ) {
+//			throw new RuntimeException("게시글 수정권한이 없습니다.");
+//		}
 		// 2. 게시글 정보 조회
 		//     - newlineClear메서드를 통해 개행문자 원상복구
 		board.setBoardContent(Utils.newLineClear(board.getBoardContent()));// <br> -> \n
@@ -367,9 +368,35 @@ public class BoardController {
 	) {
 		// 다음 업무로직의 순서에 맞춰 코드를 작성
 		// 0. 유효성검사(생략)
-		// 1. 현재 게시글을 수정할 수 있는 사용자인지 체크. 
+		// 1. 현재 게시글을 수정할 수 있는 사용자인지 체크(생략)
 		// 2. 새롭게 등록한 첨부파일이 있는지 체크 후 저장
+		List<BoardImg> imgList = new ArrayList<>();
+		for(int i =0 , j =0; i<imgNoList.size(); i++) {
+			if(!(j < upfiles.size())) { // upfiles로 꺼낼 값이 없는 경우
+				break;
+			}
+			MultipartFile upfile = upfiles.get(j++);
+			if(upfile.isEmpty()) {
+				continue;
+			}
+			String changeName = Utils.saveFile(upfile, application, boardCode); 
+			BoardImg bi = new BoardImg();
+			bi.setBoardImgNo(imgNoList.get(i)); // 현재레벨에 맞는 imgNo
+			bi.setChangeName(changeName);
+			bi.setOriginName(upfile.getOriginalFilename());
+			bi.setImgLevel(i);
+			bi.setRefBno(boardNo); // 게시글 번호 추가
+			imgList.add(bi); 
+		}
+		board.setBoardNo(boardNo);
+		board.setBoardCd(boardCode);
+		
+		log.debug("board : {}" , board);
+		log.debug("imgList : {}", imgList);
+		log.debug("deleteList : {}",deleteList);
+		
 		// 3. 게시글 , 첨부파일 수정 서비스 요청
+		int result = boardService.updateBoard(board, deleteList, imgList);
 		//    1) UPDATE에 필요한 데이터를 추가로 바인딩
 		//    서비스 내부 로직
 		//    1. 게시글 수정
@@ -380,9 +407,13 @@ public class BoardController {
 		//       3) 첨부파일이 있던 게시글에 새롭게 추가한 경우 -> UPDATE
 		//       4) 첨부파일이 있던 게시글에 첨부파일은 삭제한 경우 -> DELETE
 		//        - 사용하지 않게 된 첨부파일에 대해서는 고려하지 않아도 상관 없음.(스케쥴러를 통해 정리예정)
+		
+		
 		// 3. 처리 결과에 따라 응답 페이지 지정 
 		//    1) 실패시 에러반환
-		//    2) 성공시 작업했떤 view페이지로 redirect
+		//    2) 성공시 작업했떤 view페이지로 redirect	
+		ra.addFlashAttribute("alertMsg","게시글 수정 성공");
+		return "redirect:/board/detail/"+boardCode+"/"+boardNo;
 	}
 	
 	

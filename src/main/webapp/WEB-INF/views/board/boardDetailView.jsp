@@ -2,6 +2,7 @@
 	pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 <!DOCTYPE html>
 <html>
@@ -76,12 +77,12 @@ img {
 			</table>
 
 			<br>
-
+			<sec:authorize access="hasRole('ROLE_ADMIN') or principal.userNo.toString() == #board.boardWriter">
 			<div align="center">
 				<a class="btn btn-primary"
 					href="${contextPath }/board/update/${boardCode}/${board.boardNo}">수정하기</a>
 			</div>
-
+			</sec:authorize>
 		</div>
 	</div>
 	<jsp:include page="/WEB-INF/views/common/footer.jsp"></jsp:include>

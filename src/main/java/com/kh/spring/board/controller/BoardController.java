@@ -320,6 +320,71 @@ public class BoardController {
 				.body(resource);
 	}
 	
+	// 게시판 수정기능(Get)
+	@GetMapping("/update/{boardCode}/{boardNo}")
+	public String updateBoard(
+			@PathVariable("boardCode") String boardCode,
+			@PathVariable("boardNo") int boardNo,
+			Authentication authentication,
+			Model model
+			) {
+		// 업무로직
+		// 1. 현재 게시글을 수정할 수 있는 사용자인지 체크
+		//     - 게시글의 작성자 == 로그인한 사용자
+		//     - 관리자 권한
+		BoardExt board = boardService.selectBoard(boardNo);
+		if(board == null) {
+			throw new RuntimeException("게시글이 존재하지 않습니다.");
+		}
+		
+		int boardWriter = Integer.parseInt(board.getBoardWriter());
+		int userNo = ((Member) authentication.getPrincipal()).getUserNo();
+		if(!(boardWriter == userNo || (authentication.getAuthorities().stream()
+				.anyMatch( authority -> authority.getAuthority().equals("ROLE_ADMIN") )) ) ) {
+			throw new RuntimeException("게시글 수정권한이 없습니다.");
+		}
+		// 2. 게시글 정보 조회
+		//     - newlineClear메서드를 통해 개행문자 원상복구
+		board.setBoardContent(Utils.newLineClear(board.getBoardContent()));// <br> -> \n
+		
+		// 3. model영역에 추가후 forward
+		model.addAttribute("board",board);
+		
+		return "board/boardUpdateForm";
+	}
+	
+	@PostMapping("/update/{boardCode}/{boardNo}")
+	public String updateBoard2(
+			@ModelAttribute Board board,
+			@PathVariable("boardCode") String boardCode,
+			@PathVariable("boardNo") int boardNo,
+			Authentication authentication,
+			RedirectAttributes ra, 
+			Model model,			
+			@RequestParam(value = "upfile", required = false) List<MultipartFile> upfiles,			
+			String deleteList ,
+			@RequestParam(value = "imgNo", required = false) List<Integer> imgNoList
+	) {
+		// 다음 업무로직의 순서에 맞춰 코드를 작성
+		// 0. 유효성검사(생략)
+		// 1. 현재 게시글을 수정할 수 있는 사용자인지 체크. 
+		// 2. 새롭게 등록한 첨부파일이 있는지 체크 후 저장
+		// 3. 게시글 , 첨부파일 수정 서비스 요청
+		//    1) UPDATE에 필요한 데이터를 추가로 바인딩
+		//    서비스 내부 로직
+		//    1. 게시글 수정
+		//       1) XSS, 개행 처리 후 추가
+		//    2. 첨부파일 수정 -> INSERT, UPDATE, DELETE
+		//       1) 새롭게 등록한 첨부파일이 없는 경우 -> 아무것도 하지 않음
+		//       2) 첨부파일이 없던 게시글에 새롭게 추가한 경우 -> INSERT
+		//       3) 첨부파일이 있던 게시글에 새롭게 추가한 경우 -> UPDATE
+		//       4) 첨부파일이 있던 게시글에 첨부파일은 삭제한 경우 -> DELETE
+		//        - 사용하지 않게 된 첨부파일에 대해서는 고려하지 않아도 상관 없음.(스케쥴러를 통해 정리예정)
+		// 3. 처리 결과에 따라 응답 페이지 지정 
+		//    1) 실패시 에러반환
+		//    2) 성공시 작업했떤 view페이지로 redirect
+	}
+	
 	
 	
 	

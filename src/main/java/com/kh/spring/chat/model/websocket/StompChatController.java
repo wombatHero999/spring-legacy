@@ -14,8 +14,19 @@ public class StompChatController {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
+    @MessageMapping("/chat/message")  // 클라이언트에서 /pub/chat/message로 전송
+    public void sendMessage(@Payload ChatMessage chatMessage) {
+        if ("ENTER".equals(chatMessage.getType())) {
+            chatMessage.setMessage(chatMessage.getUserName() + "님이 입장하셨습니다.");
+        } else if ("QUIT".equals(chatMessage.getType())) {
+            chatMessage.setMessage(chatMessage.getUserName() + "님이 퇴장하셨습니다.");
+        }
+
+        messagingTemplate.convertAndSend("/sub/chat/room/" + chatMessage.getChatRoomNo(), chatMessage);
+    }
+    
     @MessageMapping("/chat/sendMessage")
-    public void sendMessage(@Payload ChatMessage message) {
+    public void sendMessage2(@Payload ChatMessage message) {
         // 채팅 메시지 저장 또는 처리 로직 추가 가능
         messagingTemplate.convertAndSend("/topic/room/" + message.getChatRoomNo(), message);
     }

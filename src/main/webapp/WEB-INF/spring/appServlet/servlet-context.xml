@@ -89,13 +89,32 @@
 			  실시간으로 사용자에게 알림을 보내는 기능처럼 복잡한 기능을 만들고 싶다면, WebSocket/Sockjs만으로는 부족 하다.(가능은 하나 손이 많이감)
 				
 		STOMP(Simple Text Oriented Messaging Protocol)+ 
-		    - 텍스트 기반의 메시징 프로토콜로, WebSocket 위에서 동작하며
-		      메시지에 "구독", "전송 목적지", "메시지 유형","헤더" ,바디" 등을 프레임 단위로 묶어서 전송한다.
-		    - 이를 통해 구독 기반 메세지 처리, 사용자 그룹 알림 등을 체꼐적으로 처리할 수 있다.
-			- 스톰프로 전송하는 메세지 프레임은 
-			  메시지의 타입(CONNECT, SUBSCRIBE, UNSUBSCRIBE, SEND, DISCONNECT)과 
-			  메시지 헤더(content-length, content-type, destination),
-			  메시지 바디(메시지 내용)가 포함된다.
+		 - WebSocket위에서 동작하는 메시징 프로토콜
+		 - 메시지에 "목적지(Destination)", 
+		 		 "구독(Subscribe-url)", 
+		         "명령(CONNECT, SUBSCRIBE, UNSUBSCRIBE, SEND, DISCONNECT)",
+		         "헤더(content-length, content-type, destination)",
+		         "바디(본문)"를 부여해 의미있는 통신을 가능하게 한다.
+	     - 이를 통해 구독/발행 기반 메세지 처리, 사용자 그룹 알림 등을 쉽게 구현할 수 있다.
+		
+		STOMP 동작 방식
+		 1. 클라이언트가 SockJS와 STOMP를 이용하여 서버에 WS "연결 요청"을 보냄
+		    목적지 : stomp-endpoint
+		    명령 : CONNECT
+		    헤더 : ?
+		    바디 : ?
+		    - 연결 수락시 서버는 CONNECTED프레임을 웹소켓을 통해 반환
+		 2. 클라이언트는 서버와 연결 수립 후 "구독하는 채널"을 전달 -> 브로커 객체가 관리
+		    - 서버는 해당 채널로 전송되는 메시지를 클라이언트에게 푸시
+		 3. 클라이언트가 서버에게 메시지를 전달(SEND)
+		 4. 서버는 클라이언트가 전달한 메시지를 받아 특정 구독 채널에 메시지를 전송
+		 5. 채널을 구독한 클라이언트는 실시간으로 메시지를 수신
+		 6. 메시지 수신시 지정한 콜백함수 실행
+		 7. 연결종료
+		  
+		    
+		 
+		 
 	-->
 
 
@@ -118,6 +137,20 @@
 		<!-- SockJs라이브러리를 이용해서 만들어진 웹소켓 객체 -->
 		<websocket:sockjs></websocket:sockjs>
 	</websocket:handlers>
+	
+	<!-- 
+		application-destination-prefix
+		 - 클라이언트가 서버로 메시지를 보낼 경로
+		 
+		websocket:simple-broker
+		 - 클라리언트가 메시지를 받을 구독 경로 
+	  -->
+	<websocket:message-broker application-destination-prefix="/pub">
+	    <websocket:stomp-endpoint path="/stomp/chat">
+	        <websocket:sockjs/>
+	    </websocket:stomp-endpoint>
+	    <websocket:simple-broker prefix="/sub"/>
+	</websocket:message-broker>
 	
 	
 </beans:beans>

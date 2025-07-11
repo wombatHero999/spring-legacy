@@ -13,11 +13,10 @@ local.properties
 .settings/
 .loadpath
 .recommenders
-.classpath
-.project
 /target/
 *.log
 org.eclipse.*
+
 # External tool builders
 .externalToolBuilders/
 

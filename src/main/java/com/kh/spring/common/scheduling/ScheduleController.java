@@ -44,7 +44,7 @@ public class ScheduleController {
 	 *    매 시간 30분
 	 *    0 30 * * * *
 	 * */
-	@Scheduled(cron = "0 * * * * *") // 매 분 0초마다 작업을 수행
+	//@Scheduled(cron = "0 * * * * *") // 매 분 0초마다 작업을 수행
 	public void testCron() {
 		log.debug("크론 표현식 작업 실행 {} ", System.currentTimeMillis());
 	}

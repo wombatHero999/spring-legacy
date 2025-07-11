@@ -5,7 +5,9 @@
 	xmlns:context="http://www.springframework.org/schema/context"
 	xmlns:tx="http://www.springframework.org/schema/tx"
 	xmlns:aop="http://www.springframework.org/schema/aop"
-	xsi:schemaLocation="http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd
+	xmlns:websocket="http://www.springframework.org/schema/websocket"
+	xsi:schemaLocation="http://www.springframework.org/schema/websocket http://www.springframework.org/schema/websocket/spring-websocket-4.3.xsd
+		http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd
 		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
 		http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd
 		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
@@ -74,6 +76,61 @@
 		  -> AOP -> DAO -> DB
 	 -->
 	<aop:aspectj-autoproxy proxy-target-class="false"/>
+	
+	<!-- 웹소켓 설정 시작
+		Http/Https
+		 - 클라이언트와 웹서버 간에 요청과 응답기반으로 동작하는 전통적인 통신 방식.
+		 - 클라이언트의 요청이 있어야만 응답이 발생하는 "단방향" 통신 구조
+		 - 연결을 "유지하지 않고" 요청 시마다 새로운 연결을 생성. 실시간 처리기능을 개발하는게 어려움
+		 - 구현방식이 단순하고, 범용적임.
+		
+		WebSocket
+		 - 클라이언트와 서버 간의 지속적인 연결을 유지하며 , 양방향 통신을 지원하는 프토콜
+		   양방향 통신 : 양쪽 장치가 동시에 송/수신을 독립적으로 할 수 있는 통신 방식
+		 - 서버와 클라이언트가 서로 "실시간"으로 데이터를 주고 받을수 있고, 실시간 서비스개발에 
+		   사용할 수 있다.
+		 - 일반 http보다 구현이 복잡하고, 연결 수 유지에 따른 리소스 관리가 필요 
+		 
+		WebSocket사용을 위한 스펙
+		 - HTML은 HTML5부터 Websocket지원
+		 - Java에서는 java 7부터 지원
+		 - Spring framework에서는 4.0이상부터 Websocket지원
+		 - Spring 모듈 : spring-websocket, spring-messaging
+		
+		WebSocket의 동작방식
+		 - 첫 연결 요청은 Http프로토콜을 사용하고, 연결 성공시 WebSocket통신으로 전환
+		 - 연결되고 나서부터는 데이터프레임을 주고 받는다.
+		
+		SockJS
+		 - WebSocket을 지원하지 않는 환경에서도 Websocket처럼 동작하게 해주는 자바스크립트 라이브러리
+		 - WebSocket을 사용할수 없는 경우 xhr 스트리밍, polling방식을 통해 유사한 기능을 제공
+		 - WebSocket의 하위호환성을 확보하기위한 라이브러리.
+		 - WebSocket/Sockjs는 "메시지를 실시간으로 송수신 하기위한 양방향 채널"이며, 특별한 기능 규악은 존재하지 않는다.
+	 -->
+	 
+	 <beans:bean id="chatHandler" class="com.kh.spring.chat.model.websocket.ChatWebsocket" />
+	 
+	<websocket:handlers>
+		<!-- 웹소켓 요청을 처리할수 있는 bean객체 등록 -->
+		<websocket:mapping handler="chatHandler" path="/chat"/>
+		
+		<!-- 
+			첫 웹소켈 연결 요청시 전달되는 HttpSession정보를 WebSocketSession으로 복사해주는
+			입터셉터
+		 -->
+		<websocket:handshake-interceptors>
+			<beans:bean class="org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor" />
+		</websocket:handshake-interceptors>
+		
+		<!-- sockjs라이브러리를 이용하여 만들어진 웹소켓 객체 -->
+		<websocket:sockjs></websocket:sockjs>
+	</websocket:handlers>
+	
+	
+	
+	
+	
+	
 	
 	
 	
